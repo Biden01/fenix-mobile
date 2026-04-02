@@ -1,0 +1,11 @@
+{
+  "name": "liquid-glass-tabbar",
+  "version": "1.0.0",
+  "description": "Native Liquid Glass tab bar for iOS 26+",
+  "main": "index.ts",
+  "files": [
+    "index.ts",
+    "ios/",
+    "expo-module.config.json"
+  ]
+}

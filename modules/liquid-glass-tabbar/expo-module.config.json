@@ -1,0 +1,7 @@
+{
+  "platforms": ["ios"],
+  "ios": {
+    "modules": ["LiquidGlassTabBarModule"],
+    "podspecPath": "./liquid-glass-tabbar.podspec"
+  }
+}
