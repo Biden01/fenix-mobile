@@ -17,21 +17,20 @@ export function LiquidGlassView({
   tint = '#ffffff',
   interactive = false,
 }: LiquidGlassViewProps) {
-  if (Platform.OS !== 'ios' || !NativeLiquidGlassView) {
-    return <View style={style}>{children}</View>;
+  if (Platform.OS === 'ios' && NativeLiquidGlassView) {
+    const NativeView = NativeLiquidGlassView as React.ComponentType<any>;
+    return (
+      <View style={[{ overflow: 'hidden' }, style]}>
+        <NativeView
+          cornerRadius={cornerRadius}
+          tint={tint}
+          interactive={interactive}
+          style={StyleSheet.absoluteFill}
+        />
+        {children}
+      </View>
+    );
   }
 
-  const NativeView = NativeLiquidGlassView as React.ComponentType<any>;
-
-  return (
-    <View style={[style, { overflow: 'hidden' }]}>
-      <NativeView
-        cornerRadius={cornerRadius}
-        tint={tint}
-        interactive={interactive}
-        style={StyleSheet.absoluteFill}
-      />
-      {children}
-    </View>
-  );
+  return <View style={style}>{children}</View>;
 }

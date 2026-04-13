@@ -7,8 +7,11 @@ import {
   Vibration,
 } from 'react-native';
 import { Delete } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/theme';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { useLockStore } from '@/store/lockStore';
+import { useT } from '@/i18n';
 
 const PAD = [
   ['1', '2', '3'],
@@ -27,8 +30,9 @@ interface SetupPinScreenProps {
   cancelLabel?: string;
 }
 
-export function SetupPinScreen({ onDone, onCancel, cancelLabel = 'Отмена' }: SetupPinScreenProps) {
+export function SetupPinScreen({ onDone, onCancel, cancelLabel }: SetupPinScreenProps) {
   const theme = useTheme();
+  const t = useT();
   const { setPin } = useLockStore();
   const [step, setStep] = useState<Step>('enter');
   const [firstPin, setFirstPin] = useState('');
@@ -56,7 +60,7 @@ export function SetupPinScreen({ onDone, onCancel, cancelLabel = 'Отмена' 
           onDone();
         } else {
           Vibration.vibrate(400);
-          setError('PIN-коды не совпадают. Попробуйте снова.');
+          setError(t.lock.pinMismatch);
           setPin2('');
           setStep('enter');
           setFirstPin('');
@@ -68,15 +72,19 @@ export function SetupPinScreen({ onDone, onCancel, cancelLabel = 'Отмена' 
   const dots = Array.from({ length: PIN_LENGTH }, (_, i) => i < pin.length);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={theme.isDark
+          ? ['#0a0a14', '#0f0f1e', '#0a0a14']
+          : ['#f5f5f8', '#eeeef5', '#f5f5f8']}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={styles.top}>
         <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: 24, color: theme.colors.foreground }}>
-          {step === 'enter' ? 'Создайте PIN-код' : 'Повторите PIN-код'}
+          {step === 'enter' ? t.lock.createPin : t.lock.repeatPin}
         </Text>
         <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, marginTop: 8, textAlign: 'center' }}>
-          {step === 'enter'
-            ? 'Введите 4-значный PIN для защиты приложения'
-            : 'Введите PIN ещё раз для подтверждения'}
+          {step === 'enter' ? t.lock.createPinHint : t.lock.repeatPinHint}
         </Text>
       </View>
 
@@ -119,9 +127,10 @@ export function SetupPinScreen({ onDone, onCancel, cancelLabel = 'Отмена' 
                 <TouchableOpacity
                   key={key}
                   onPress={() => handleKey(key)}
-                  style={[styles.key, styles.numKey, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
-                  activeOpacity={0.6}
+                  style={[styles.key, styles.numKey]}
+                  activeOpacity={0.7}
                 >
+                  <GlassCard cornerRadius={40} style={StyleSheet.absoluteFill} />
                   <Text style={{ fontFamily: theme.fonts.bold, fontSize: 24, color: theme.colors.foreground }}>
                     {key}
                   </Text>
@@ -134,7 +143,7 @@ export function SetupPinScreen({ onDone, onCancel, cancelLabel = 'Отмена' 
 
       <TouchableOpacity onPress={onCancel} style={{ marginTop: 32 }}>
         <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground }}>
-          {cancelLabel}
+          {cancelLabel ?? t.common.cancel}
         </Text>
       </TouchableOpacity>
     </View>
@@ -146,8 +155,8 @@ const styles = StyleSheet.create({
   top: { alignItems: 'center', marginBottom: 48 },
   dots: { flexDirection: 'row', gap: 16, marginBottom: 12 },
   dot: { width: 16, height: 16, borderRadius: 8, borderWidth: 2 },
-  pad: { gap: 12 },
-  row: { flexDirection: 'row', gap: 16 },
-  key: { width: 80, height: 80, alignItems: 'center', justifyContent: 'center', borderRadius: 40 },
-  numKey: { borderWidth: 1 },
+  pad: { gap: 14 },
+  row: { flexDirection: 'row', gap: 18 },
+  key: { width: 82, height: 82, alignItems: 'center', justifyContent: 'center', borderRadius: 41, overflow: 'hidden' },
+  numKey: {},
 });

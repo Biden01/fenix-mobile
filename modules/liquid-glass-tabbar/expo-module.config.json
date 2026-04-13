@@ -1,7 +1,13 @@
 {
   "platforms": ["ios"],
   "ios": {
-    "modules": ["LiquidGlassTabBarModule"],
+    "modules": [
+      "LiquidGlassTabBarModule",
+      "LiquidGlassViewModule",
+      "GlassButtonModule",
+      "GlassCardModule",
+      "GlassSegmentedPickerModule"
+    ],
     "podspecPath": "./liquid-glass-tabbar.podspec"
   }
 }

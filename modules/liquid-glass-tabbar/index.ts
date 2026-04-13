@@ -1,6 +1,8 @@
 import { requireNativeViewManager } from 'expo-modules-core';
 import { ViewProps, Platform } from 'react-native';
 
+// MARK: - Tab Bar
+
 export interface TabItem {
   id: string;
   label: string;
@@ -14,18 +16,66 @@ export interface LiquidGlassTabBarProps extends ViewProps {
   onTabPress: (event: { nativeEvent: { tabId: string } }) => void;
 }
 
-// Native view only available on iOS
-const NativeLiquidGlassTabBar = Platform.OS === 'ios'
-  ? requireNativeViewManager('LiquidGlassTabBar')
-  : null;
+// MARK: - Glass Button
 
-const NativeLiquidGlassView = Platform.OS === 'ios'
-  ? requireNativeViewManager('LiquidGlassView')
-  : null;
+export interface GlassButtonNativeProps extends ViewProps {
+  label: string;
+  icon?: string;
+  tint?: string;
+  onButtonPress: (event: { nativeEvent: Record<string, never> }) => void;
+}
 
-export { NativeLiquidGlassTabBar, NativeLiquidGlassView };
+// MARK: - Glass Card (background surface для карточек)
 
-// SF Symbol mapping for common icons
+export interface GlassCardNativeProps extends ViewProps {
+  cornerRadius?: number;
+  tint?: string;
+}
+
+// MARK: - Glass Segmented Picker
+
+export interface PickerItemData {
+  id: string;
+  label: string;
+}
+
+export interface GlassSegmentedPickerNativeProps extends ViewProps {
+  items: PickerItemData[];
+  selectedId: string;
+  tint?: string;
+  onSelect: (event: { nativeEvent: { id: string } }) => void;
+}
+
+// MARK: - Native view managers (iOS only)
+
+function loadNativeView(name: string) {
+  if (Platform.OS !== 'ios') return null;
+  try {
+    const v = requireNativeViewManager(name);
+    console.log(`[LiquidGlass] ✅ ${name} loaded`);
+    return v;
+  } catch (e) {
+    console.warn(`[LiquidGlass] ❌ ${name} not available:`, e);
+    return null;
+  }
+}
+
+const NativeLiquidGlassTabBar = loadNativeView('LiquidGlassTabBar');
+const NativeLiquidGlassView    = loadNativeView('LiquidGlassView');
+const NativeGlassButton        = loadNativeView('GlassButton');
+const NativeGlassCard          = loadNativeView('GlassCard');
+const NativeGlassSegmentedPicker = loadNativeView('GlassSegmentedPicker');
+
+export {
+  NativeLiquidGlassTabBar,
+  NativeLiquidGlassView,
+  NativeGlassButton,
+  NativeGlassCard,
+  NativeGlassSegmentedPicker,
+};
+
+// MARK: - SF Symbol mapping
+
 export const SF_SYMBOLS = {
   home: 'house.fill',
   users: 'person.3.fill',
@@ -39,9 +89,15 @@ export const SF_SYMBOLS = {
   plus: 'plus',
   heart: 'heart.fill',
   star: 'star.fill',
+  trophy: 'trophy.fill',
+  medal: 'medal.fill',
+  percent: 'percent',
+  arrowUp: 'arrow.up.right',
+  people: 'person.2.fill',
 } as const;
 
-// Check if Liquid Glass is available (iOS 26+)
+// MARK: - iOS 26 detection
+
 export const isLiquidGlassAvailable = (): boolean => {
   if (Platform.OS !== 'ios') return false;
   const version = parseInt(Platform.Version as string, 10);

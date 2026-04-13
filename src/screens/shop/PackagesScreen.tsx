@@ -4,7 +4,7 @@ import { ArrowLeft, Package, Star, Zap, Crown, CheckCircle, CreditCard, X } from
 import { LinearGradient } from 'expo-linear-gradient';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '@/theme';
-import { GoldButton, StatusBadge } from '@/components/ui';
+import { GoldButton, GlassCard, StatusBadge } from '@/components/ui';
 import { shopService } from '@/api';
 import { apiClient } from '@/api/client';
 import { useAuthStore } from '@/store';
@@ -165,19 +165,19 @@ export function PackagesScreen({ onBack, onPurchaseSuccess }: PackagesScreenProp
         });
         setCardPayLoading(false);
         if (result.error) {
-          Alert.alert(t.common.error, result.error || 'Ошибка активации пакета');
+          Alert.alert(t.common.error, result.error || t.shop.activationError);
         } else {
           await refreshProfile();
-          Alert.alert(t.common.success, `Пакет ${cardPayPlan?.name} активирован!`, [
+          Alert.alert(t.common.success, `${t.shop.packagePrefix} ${cardPayPlan?.name} ${t.shop.packageActivatedSuffix}`, [
             { text: t.common.ok, onPress: onPurchaseSuccess ?? onBack },
           ]);
         }
       } else if (msg.type === 'fail') {
         setCardPayPlan(null);
-        Alert.alert(t.common.error, 'Оплата не прошла. Попробуйте ещё раз.');
+        Alert.alert(t.common.error, t.shop.paymentFailed);
       } else if (msg.type === 'error') {
         setCardPayPlan(null);
-        Alert.alert(t.common.error, msg.message || 'Ошибка платёжной формы');
+        Alert.alert(t.common.error, msg.message || t.shop.paymentFormError);
       }
     } catch {
       // ignore parse errors
@@ -230,18 +230,13 @@ export function PackagesScreen({ onBack, onPurchaseSuccess }: PackagesScreenProp
           },
         ]}
       >
-        <TouchableOpacity
-          onPress={onBack}
-          style={[
-            styles.backButton,
-            {
-              backgroundColor: theme.colors.card,
-              borderRadius: theme.borderRadius.full,
-              padding: theme.spacing[2],
-            },
-          ]}
-        >
-          <ArrowLeft size={24} color={theme.colors.foreground} />
+        <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
+          <GlassCard
+            cornerRadius={theme.borderRadius.full}
+            style={[styles.backButton, { padding: theme.spacing[2] }]}
+          >
+            <ArrowLeft size={24} color={theme.colors.foreground} />
+          </GlassCard>
         </TouchableOpacity>
         <Text
           style={[
@@ -289,15 +284,15 @@ export function PackagesScreen({ onBack, onPurchaseSuccess }: PackagesScreenProp
           const isPurchasing = purchasing === pkg.planLevel;
 
           return (
-            <View
+            <GlassCard
               key={pkg.id}
+              cornerRadius={theme.borderRadius['2xl']}
+              tint={meta.recommended ? theme.gold.primary : '#ffffff'}
               style={[
                 styles.packageCard,
                 {
-                  backgroundColor: theme.colors.card,
-                  borderRadius: theme.borderRadius['2xl'],
-                  borderWidth: meta.recommended ? 2 : 1,
-                  borderColor: meta.recommended ? theme.gold.primary : theme.colors.border,
+                  borderWidth: meta.recommended ? 2 : StyleSheet.hairlineWidth,
+                  borderColor: meta.recommended ? theme.gold.primary : 'rgba(255,255,255,0.12)',
                   padding: theme.spacing[5],
                   marginBottom: theme.spacing[4],
                 },
@@ -450,11 +445,11 @@ export function PackagesScreen({ onBack, onPurchaseSuccess }: PackagesScreenProp
                 >
                   <CreditCard size={15} color={theme.colors.mutedForeground} />
                   <Text style={[styles.cardPayText, { color: theme.colors.mutedForeground, fontFamily: theme.fonts.medium }]}>
-                    Оплатить картой
+                    {t.shop.payByCard}
                   </Text>
                 </TouchableOpacity>
               )}
-            </View>
+            </GlassCard>
           );
         })}
       </ScrollView>
@@ -469,7 +464,7 @@ export function PackagesScreen({ onBack, onPurchaseSuccess }: PackagesScreenProp
         <View style={[styles.webViewContainer, { backgroundColor: theme.colors.background }]}>
           <View style={[styles.webViewHeader, { borderBottomColor: theme.colors.border }]}>
             <Text style={[styles.webViewTitle, { color: theme.colors.foreground, fontFamily: theme.fonts.bold }]}>
-              Оплата картой — {cardPayPlan?.name}
+              {t.shop.cardPaymentTitle} — {cardPayPlan?.name}
             </Text>
             <TouchableOpacity onPress={() => setCardPayPlan(null)} style={styles.webViewClose}>
               <X size={22} color={theme.colors.foreground} />
@@ -480,7 +475,7 @@ export function PackagesScreen({ onBack, onPurchaseSuccess }: PackagesScreenProp
               source={{
                 html: buildTipTopHtml({
                   publicId: TIPTOP_PUBLIC_ID,
-                  description: `Пакет ${cardPayPlan.name} в Fenix International`,
+                  description: `${t.shop.packagePrefix} ${cardPayPlan.name} ${t.shop.inFenix}`,
                   amount: cardPayPlan.amount,
                   accountId: String(user.user_id),
                   email: user.email || '',

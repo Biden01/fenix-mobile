@@ -1,5 +1,5 @@
 import ExpoModulesCore
-import SwiftUI
+import UIKit
 
 public class LiquidGlassTabBarModule: Module {
     public func definition() -> ModuleDefinition {
@@ -85,7 +85,7 @@ class LiquidGlassTabBarExpoView: ExpoView {
     }
 
     func selectTab(_ tabId: String) {
-        tabBarVC.selectTab(tabId)
+        DispatchQueue.main.async { self.tabBarVC.selectTab(tabId) }
     }
 
     func setGoldColor(_ color: String) {

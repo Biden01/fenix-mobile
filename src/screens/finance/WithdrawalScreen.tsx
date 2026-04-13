@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList, ActivityIndicator } from 'react-native';
 import { ArrowLeft, CreditCard, Building2, Wallet, X } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { GradientCard, GlassInput, GoldButton, Tabs } from '@/components/ui';
+import { GradientCard, GlassCard, GlassInput, GoldButton, GlassSegmentedPicker } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { financeService, WithdrawHistoryItem } from '@/api';
 import { useT } from '@/i18n';
@@ -28,9 +28,9 @@ export function WithdrawalScreen({ onBack }: WithdrawalScreenProps) {
   const [historyLoading, setHistoryLoading] = useState(false);
 
   const walletTabs = [
-    { key: 'akwa', label: 'Akwa' },
-    { key: 'bonus', label: 'Бонус' },
-    { key: 'cashback', label: 'Кэшбэк' },
+    { key: 'akwa', label: t.finance.walletAkwa },
+    { key: 'bonus', label: t.finance.walletBonus },
+    { key: 'cashback', label: t.finance.walletCashback },
   ];
 
   const getBalance = () => {
@@ -119,8 +119,10 @@ export function WithdrawalScreen({ onBack }: WithdrawalScreenProps) {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: 60, paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: theme.spacing[3] }]}>
-        <TouchableOpacity onPress={onBack} style={[{ backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.full, padding: theme.spacing[2] }]}>
-          <ArrowLeft size={24} color={theme.colors.foreground} />
+        <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
+          <GlassCard cornerRadius={theme.borderRadius.full} style={{ padding: theme.spacing[2] }}>
+            <ArrowLeft size={24} color={theme.colors.foreground} />
+          </GlassCard>
         </TouchableOpacity>
         <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes.xl, color: theme.colors.foreground, flex: 1, textAlign: 'center' }}>
           {t.finance.withdrawTitle}
@@ -136,7 +138,13 @@ export function WithdrawalScreen({ onBack }: WithdrawalScreenProps) {
         ListHeaderComponent={
           <View>
             {/* Wallet Tabs */}
-            <Tabs tabs={walletTabs} activeTab={walletTab} onTabChange={(k) => setWalletTab(k as WalletType)} style={{ marginBottom: theme.spacing[4] }} />
+            <GlassSegmentedPicker
+              items={walletTabs.map((t) => ({ id: t.key, label: t.label }))}
+              selectedId={walletTab}
+              onSelect={(id) => setWalletTab(id as WalletType)}
+              tint="#FFD700"
+              style={{ marginBottom: theme.spacing[4] }}
+            />
 
             {/* Balance */}
             <GradientCard variant="gold" style={{ marginBottom: theme.spacing[4] }}>
@@ -157,22 +165,16 @@ export function WithdrawalScreen({ onBack }: WithdrawalScreenProps) {
             <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.md, color: theme.colors.foreground, marginBottom: theme.spacing[3] }}>
               {t.finance.withdrawMethod}
             </Text>
-            <View style={{ flexDirection: 'row', marginBottom: theme.spacing[4] }}>
-              {(['card', 'bank'] as const).map((m) => (
-                <TouchableOpacity key={m} onPress={() => setMethod(m)} style={[styles.methodButton, {
-                  flex: 1, marginHorizontal: theme.spacing[1],
-                  backgroundColor: method === m ? theme.gold.light : theme.colors.card,
-                  borderRadius: theme.borderRadius.xl, borderWidth: 2,
-                  borderColor: method === m ? theme.gold.primary : theme.colors.border,
-                  padding: theme.spacing[3],
-                }]}>
-                  {m === 'card' ? <CreditCard size={22} color={method === m ? theme.colors.goldForeground : theme.colors.mutedForeground} /> : <Building2 size={22} color={method === m ? theme.colors.goldForeground : theme.colors.mutedForeground} />}
-                  <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: method === m ? theme.colors.goldForeground : theme.colors.foreground, marginTop: theme.spacing[1] }}>
-                    {m === 'card' ? t.finance.cardMethod : t.finance.ibanMethod}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <GlassSegmentedPicker
+              items={[
+                { id: 'card', label: t.finance.cardMethod },
+                { id: 'bank', label: t.finance.ibanMethod },
+              ]}
+              selectedId={method}
+              onSelect={(id) => setMethod(id as 'card' | 'bank')}
+              tint="#FFD700"
+              style={{ marginBottom: theme.spacing[4] }}
+            />
 
             {/* Form */}
             <GradientCard style={{ marginBottom: theme.spacing[6] }}>
@@ -246,5 +248,4 @@ export function WithdrawalScreen({ onBack }: WithdrawalScreenProps) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center' },
-  methodButton: { alignItems: 'center' },
 });

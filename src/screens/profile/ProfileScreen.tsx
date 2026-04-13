@@ -28,7 +28,7 @@ import {
 } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useTheme } from '@/theme';
-import { ScreenWrapper, GradientCard, Avatar, RankBadge, GoldButton } from '@/components/ui';
+import { ScreenWrapper, GradientCard, GlassCard, Avatar, RankBadge, GoldButton, GlassButton } from '@/components/ui';
 import { useAuthStore, useThemeStore, useLanguageStore } from '@/store';
 import { useLockStore } from '@/store/lockStore';
 import { MEDIA_BASE_URL } from '@/api/config';
@@ -177,8 +177,8 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
   const handleCountryPress = () => {
     Alert.alert(
-      'Страна',
-      'Выберите вашу страну',
+      t.auth.country,
+      t.auth.selectCountry,
       [
         ...COUNTRIES.map(c => ({
           text: `${c.label} (${c.currency})`,
@@ -257,23 +257,24 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
         styles.menuItem,
         {
           paddingVertical: theme.spacing[4],
-          borderBottomWidth: 1,
-          borderBottomColor: theme.colors.border,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: 'rgba(255,255,255,0.08)',
         },
       ]}
     >
-      <View
+      <GlassCard
+        cornerRadius={theme.borderRadius.lg}
+        tint={danger ? theme.semantic.error : '#ffffff'}
         style={[
           styles.menuIcon,
           {
-            backgroundColor: danger ? `${theme.semantic.error}20` : theme.colors.muted,
-            borderRadius: theme.borderRadius.lg,
             padding: theme.spacing[2],
+            backgroundColor: danger ? `${theme.semantic.error}15` : 'transparent',
           },
         ]}
       >
         <Icon size={20} color={danger ? theme.semantic.error : theme.colors.mutedForeground} />
-      </View>
+      </GlassCard>
       <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
         <Text
           style={[
@@ -434,11 +435,11 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
               >
                 <Copy size={18} color={theme.colors.foreground} />
               </TouchableOpacity>
-              <GoldButton
-                title={t.profile.share}
+              <GlassButton
+                label={t.profile.share}
+                icon="square.and.arrow.up"
+                tint="#FFD700"
                 onPress={() => handleShareLink(user.leftLegLink, true)}
-                size="sm"
-                fullWidth={false}
                 style={{ marginLeft: theme.spacing[2] }}
               />
             </View>
@@ -474,11 +475,11 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
               >
                 <Copy size={18} color={theme.colors.foreground} />
               </TouchableOpacity>
-              <GoldButton
-                title={t.profile.share}
+              <GlassButton
+                label={t.profile.share}
+                icon="square.and.arrow.up"
+                tint="#FFD700"
                 onPress={() => handleShareLink(user.rightLegLink, false)}
-                size="sm"
-                fullWidth={false}
                 style={{ marginLeft: theme.spacing[2] }}
               />
             </View>
@@ -563,7 +564,7 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
             />
             <MenuItem
               icon={Globe}
-              label="Страна"
+              label={t.auth.country}
               value={COUNTRIES.find(c => c.code === (user.country || 'KZ'))?.label || 'Казахстан 🇰🇿'}
               onPress={handleCountryPress}
             />
@@ -662,7 +663,7 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
         style={styles.modalOverlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
+        <GlassCard cornerRadius={20} style={styles.modalCard}>
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: theme.colors.foreground, fontFamily: theme.fonts.bold }]}>
               {t.profile.changePassword}
@@ -701,7 +702,7 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
             loading={changingPassword}
             style={{ marginTop: 8 }}
           />
-        </View>
+        </GlassCard>
       </KeyboardAvoidingView>
     </Modal>
 

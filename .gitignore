@@ -53,3 +53,4 @@ ios/*.xcodeproj/xcuserdata/
 # Screenshots / temp files
 *.png
 !assets/**/*.png
+!ios/Fenix/Images.xcassets/AppIcon.appiconset/*.png

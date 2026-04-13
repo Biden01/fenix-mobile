@@ -1,272 +1,83 @@
-import SwiftUI
+import UIKit
 import ExpoModulesCore
 
 // MARK: - Tab Item Model
-struct TabItem: Identifiable {
+struct TabItem {
     let id: String
     let label: String
     let icon: String
 }
 
-// MARK: - Reactive state
-class TabBarState: ObservableObject {
-    @Published var selectedTab: String = ""
-    @Published var tabs: [TabItem] = []
-    @Published var goldColor: Color = Color(red: 1.0, green: 0.84, blue: 0.0)
-}
-
-// MARK: - iOS 26 Floating Liquid Glass Pill (with GlassEffectContainer for lens morphing)
-@available(iOS 26.0, *)
-struct LiquidGlassTabBarView: View {
-    @ObservedObject var state: TabBarState
-    let onTabPress: (String) -> Void
-
-    @Namespace private var pillNamespace
-
-    var body: some View {
-        GeometryReader { geo in
-            VStack(spacing: 0) {
-                Spacer()
-
-                // GlassEffectContainer enables physical lens morphing between glass elements
-                GlassEffectContainer {
-                    HStack(spacing: 0) {
-                        ForEach(state.tabs) { tab in
-                            let isSelected = state.selectedTab == tab.id
-
-                            Button {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                    onTabPress(tab.id)
-                                }
-                            } label: {
-                                ZStack {
-                                    // Sliding lens indicator — interactive gives the lens distortion on press
-                                    if isSelected {
-                                        Capsule()
-                                            .glassEffect(
-                                                .regular
-                                                    .tint(state.goldColor.opacity(0.22))
-                                                    .interactive()
-                                            )
-                                            .frame(height: 36)
-                                            .matchedGeometryEffect(id: "selection", in: pillNamespace)
-                                    }
-
-                                    VStack(spacing: 3) {
-                                        Image(systemName: tab.icon)
-                                            .font(.system(
-                                                size: 18,
-                                                weight: isSelected ? .semibold : .regular
-                                            ))
-                                            .symbolEffect(.bounce, value: isSelected)
-                                            .foregroundStyle(
-                                                isSelected
-                                                    ? state.goldColor
-                                                    : Color(.label).opacity(0.45)
-                                            )
-
-                                        Text(tab.label)
-                                            .font(.system(
-                                                size: 9,
-                                                weight: isSelected ? .semibold : .regular,
-                                                design: .rounded
-                                            ))
-                                            .foregroundStyle(
-                                                isSelected
-                                                    ? state.goldColor
-                                                    : Color(.label).opacity(0.45)
-                                            )
-                                    }
-                                    .frame(height: 36)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 9)
-                    .glassEffect(.regular, in: Capsule())
-                }
-                .shadow(color: .black.opacity(0.18), radius: 22, x: 0, y: 8)
-                .padding(.horizontal, 28)
-                .animation(
-                    .spring(response: 0.35, dampingFraction: 0.75),
-                    value: state.selectedTab
-                )
-
-                Spacer().frame(height: geo.safeAreaInsets.bottom + 10)
-            }
-        }
-        .ignoresSafeArea(edges: .bottom)
-    }
-}
-
-// MARK: - iOS 17–25 Fallback (same pill shape, ultraThinMaterial)
-struct FallbackTabBarView: View {
-    @ObservedObject var state: TabBarState
-    let onTabPress: (String) -> Void
-
-    @Namespace private var pillNamespace
-
-    var body: some View {
-        GeometryReader { geo in
-            VStack(spacing: 0) {
-                Spacer()
-
-                HStack(spacing: 0) {
-                    ForEach(state.tabs) { tab in
-                        let isSelected = state.selectedTab == tab.id
-
-                        Button {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                onTabPress(tab.id)
-                            }
-                        } label: {
-                            ZStack {
-                                if isSelected {
-                                    Capsule()
-                                        .fill(state.goldColor.opacity(0.18))
-                                        .frame(height: 36)
-                                        .matchedGeometryEffect(id: "selection", in: pillNamespace)
-                                }
-
-                                VStack(spacing: 3) {
-                                    Image(systemName: tab.icon)
-                                        .font(.system(
-                                            size: 18,
-                                            weight: isSelected ? .semibold : .regular
-                                        ))
-                                        .foregroundStyle(
-                                            isSelected
-                                                ? state.goldColor
-                                                : Color(.label).opacity(0.45)
-                                        )
-
-                                    Text(tab.label)
-                                        .font(.system(
-                                            size: 9,
-                                            weight: isSelected ? .semibold : .regular,
-                                            design: .rounded
-                                        ))
-                                        .foregroundStyle(
-                                            isSelected
-                                                ? state.goldColor
-                                                : Color(.label).opacity(0.45)
-                                        )
-                                }
-                                .frame(height: 36)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 9)
-                .background(
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-                        )
-                )
-                .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 8)
-                .padding(.horizontal, 28)
-                .animation(
-                    .spring(response: 0.35, dampingFraction: 0.75),
-                    value: state.selectedTab
-                )
-
-                Spacer().frame(height: geo.safeAreaInsets.bottom + 10)
-            }
-        }
-        .ignoresSafeArea(edges: .bottom)
-    }
-}
-
-// MARK: - UIKit host
-class LiquidGlassTabBarViewController: UIViewController {
+// MARK: - Native UITabBar (iOS 26+ gets Liquid Glass automatically from the system)
+class LiquidGlassTabBarViewController: UIViewController, UITabBarDelegate {
     var onTabPress: ((String) -> Void)?
-    let tabBarState = TabBarState()
 
-    private var hostingController: UIViewController?
+    private let tabBar = UITabBar()
+    private var tabIds: [String] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .clear
-        embedTabBar()
-    }
 
-    private func embedTabBar() {
-        let tabBarView: AnyView
-
-        if #available(iOS 26.0, *) {
-            tabBarView = AnyView(
-                LiquidGlassTabBarView(state: tabBarState) { [weak self] tabId in
-                    self?.onTabPress?(tabId)
-                }
-            )
-        } else {
-            tabBarView = AnyView(
-                FallbackTabBarView(state: tabBarState) { [weak self] tabId in
-                    self?.onTabPress?(tabId)
-                }
-            )
-        }
-
-        let hosting = UIHostingController(rootView: tabBarView)
-        hosting.view.backgroundColor = .clear
-        hosting.view.isOpaque = false
-        hosting.view.translatesAutoresizingMaskIntoConstraints = false
-
-        addChild(hosting)
-        view.addSubview(hosting.view)
+        tabBar.delegate = self
+        tabBar.isTranslucent = true
+        tabBar.backgroundColor = .clear
+        tabBar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tabBar)
 
         NSLayoutConstraint.activate([
-            hosting.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            hosting.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            hosting.view.topAnchor.constraint(equalTo: view.topAnchor),
-            hosting.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            tabBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tabBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tabBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
-
-        hosting.didMove(toParent: self)
-        hostingController = hosting
     }
 
     func updateTabs(_ newTabs: [TabItem]) {
-        DispatchQueue.main.async { self.tabBarState.tabs = newTabs }
+        tabIds = newTabs.map { $0.id }
+        tabBar.items = newTabs.map { tab in
+            UITabBarItem(
+                title: tab.label,
+                image: UIImage(systemName: tab.icon),
+                selectedImage: UIImage(systemName: tab.icon)
+            )
+        }
     }
 
     func selectTab(_ tabId: String) {
+        guard let index = tabIds.firstIndex(of: tabId),
+              let items = tabBar.items,
+              index < items.count else { return }
         DispatchQueue.main.async {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                self.tabBarState.selectedTab = tabId
-            }
+            self.tabBar.selectedItem = items[index]
         }
     }
 
     func setGoldColor(_ hexColor: String) {
         DispatchQueue.main.async {
-            self.tabBarState.goldColor = Color(hex: hexColor)
-                ?? Color(red: 1.0, green: 0.84, blue: 0.0)
+            self.tabBar.tintColor = UIColor(hex: hexColor)
+                ?? UIColor(red: 1.0, green: 0.84, blue: 0.0, alpha: 1.0)
         }
+    }
+
+    // MARK: - UITabBarDelegate
+    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
+        guard let index = tabBar.items?.firstIndex(of: item),
+              index < tabIds.count else { return }
+        onTabPress?(tabIds[index])
     }
 }
 
-// MARK: - Hex color helper
-extension Color {
-    init?(hex: String) {
+// MARK: - UIColor hex helper
+extension UIColor {
+    convenience init?(hex: String) {
         var s = hex.trimmingCharacters(in: .whitespacesAndNewlines)
         s = s.hasPrefix("#") ? String(s.dropFirst()) : s
         guard s.count == 6, let val = UInt64(s, radix: 16) else { return nil }
         self.init(
-            red:   Double((val >> 16) & 0xFF) / 255,
-            green: Double((val >> 8)  & 0xFF) / 255,
-            blue:  Double( val        & 0xFF) / 255
+            red:   CGFloat((val >> 16) & 0xFF) / 255,
+            green: CGFloat((val >> 8)  & 0xFF) / 255,
+            blue:  CGFloat( val        & 0xFF) / 255,
+            alpha: 1.0
         )
     }
 }

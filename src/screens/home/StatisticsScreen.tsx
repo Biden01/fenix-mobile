@@ -1,10 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, RefreshControl, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, RefreshControl, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { ChevronLeft, Users, TrendingUp, BarChart3, DollarSign, UserCheck, Activity } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { useT } from '@/i18n';
 import { ScreenWrapper } from '@/components/ui/ScreenWrapper';
 import { GradientCard } from '@/components/ui/GradientCard';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { StatCard } from '@/components/ui/StatCard';
 import { apiClient } from '@/api/client';
 import { ENDPOINTS } from '@/api/config';
@@ -27,6 +29,7 @@ interface Props {
 
 export function StatisticsScreen({ onBack, hideHeader }: Props) {
   const theme = useTheme();
+  const t = useT();
   const [stats, setStats] = useState<CompanyStats | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -63,8 +66,7 @@ export function StatisticsScreen({ onBack, hideHeader }: Props) {
     },
     backBtn: {
       padding: 8,
-      borderRadius: theme.borderRadius.md,
-      backgroundColor: theme.colors.muted,
+      borderRadius: theme.borderRadius.full,
     },
     title: {
       fontSize: theme.fontSizes.lg,
@@ -103,8 +105,8 @@ export function StatisticsScreen({ onBack, hideHeader }: Props) {
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingVertical: 14,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: 'rgba(255,255,255,0.08)',
     },
     statLabel: {
       fontSize: theme.fontSizes.sm,
@@ -133,12 +135,14 @@ export function StatisticsScreen({ onBack, hideHeader }: Props) {
       {/* Header */}
       {!hideHeader && (
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-            <ChevronLeft size={20} color={theme.colors.foreground} />
+          <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
+            <GlassCard cornerRadius={theme.borderRadius.full} style={styles.backBtn}>
+              <ChevronLeft size={20} color={theme.colors.foreground} />
+            </GlassCard>
           </TouchableOpacity>
           <View>
-            <Text style={styles.title}>Статистика</Text>
-            <Text style={styles.subtitle}>Показатели компании</Text>
+            <Text style={styles.title}>{t.statistics.title}</Text>
+            <Text style={styles.subtitle}>{t.statistics.subtitle}</Text>
           </View>
         </View>
       )}
@@ -148,59 +152,59 @@ export function StatisticsScreen({ onBack, hideHeader }: Props) {
           <ActivityIndicator size="large" color={theme.colors.goldForeground} />
         </View>
       ) : !stats ? (
-        <Text style={styles.loadingText}>Нет данных</Text>
+        <Text style={styles.loadingText}>{t.statistics.noData}</Text>
       ) : (
         <>
           {/* Users stats */}
-          <Text style={styles.sectionTitle}>Пользователи</Text>
+          <Text style={styles.sectionTitle}>{t.statistics.users}</Text>
           <View style={styles.grid}>
             <View style={styles.gridItem}>
               <StatCard
                 icon={<Users size={20} color={theme.colors.goldForeground} />}
-                label="Всего"
+                label={t.statistics.total}
                 value={fmt(stats.total_users)}
               />
             </View>
             <View style={styles.gridItem}>
               <StatCard
                 icon={<Activity size={20} color={theme.semantic?.success ?? '#10b981'} />}
-                label="Активных"
+                label={t.statistics.active}
                 value={fmt(stats.active_users)}
               />
             </View>
             <View style={styles.gridItem}>
               <StatCard
                 icon={<UserCheck size={20} color={theme.colors.foreground} />}
-                label="Лидеров"
+                label={t.statistics.leaders}
                 value={fmt(stats.leaders)}
               />
             </View>
             <View style={styles.gridItem}>
               <StatCard
                 icon={<Users size={20} color={theme.colors.mutedForeground} />}
-                label="Клиентов"
+                label={t.statistics.clients}
                 value={fmt(stats.clients)}
               />
             </View>
           </View>
 
           {/* Finance stats */}
-          <Text style={styles.sectionTitle}>Финансы</Text>
+          <Text style={styles.sectionTitle}>{t.statistics.finance}</Text>
           <GradientCard variant="default" padding={16}>
             <View style={[styles.statRow, { borderTopWidth: 0 }]}>
-              <Text style={styles.statLabel}>Новых за неделю</Text>
+              <Text style={styles.statLabel}>{t.statistics.newThisWeek}</Text>
               <Text style={styles.statValue}>{fmt(stats.new_users_week)}</Text>
             </View>
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Бинарных бонусов</Text>
+              <Text style={styles.statLabel}>{t.statistics.binaryBonuses}</Text>
               <Text style={styles.statValueGold}>{fmtMoney(stats.total_binary)} ₸</Text>
             </View>
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Суммарный QV</Text>
+              <Text style={styles.statLabel}>{t.statistics.totalQv}</Text>
               <Text style={styles.statValueGold}>{fmtMoney(stats.total_qv)}</Text>
             </View>
             <View style={[styles.statRow, { borderBottomWidth: 0 }]}>
-              <Text style={styles.statLabel}>Пассивный бонус</Text>
+              <Text style={styles.statLabel}>{t.statistics.passiveBonus}</Text>
               <Text style={styles.statValueGold}>{fmtMoney(stats.total_passive)} ₸</Text>
             </View>
           </GradientCard>

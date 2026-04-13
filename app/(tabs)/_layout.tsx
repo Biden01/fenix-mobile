@@ -4,6 +4,8 @@ import { Tabs } from 'expo-router';
 import { Home, Users, ShoppingBag, Wallet, User, Shield, ExternalLink, LogOut } from 'lucide-react-native';
 import { useT } from '@/i18n';
 import { useTheme } from '@/theme';
+import { TabBar } from '@/components/ui/TabBar';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { NotificationPoller } from '@/components/NotificationPoller';
 import { registerForPushNotifications } from '@/services/pushService';
 import { useAuthStore } from '@/store';
@@ -24,7 +26,7 @@ function VerificationGate() {
 
   return (
     <View style={[styles.gate, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.gateCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+      <GlassCard cornerRadius={20} style={styles.gateCard}>
         <View style={[styles.gateIconWrap, { backgroundColor: `${theme.colors.goldForeground}15`, borderColor: `${theme.colors.goldForeground}40` }]}>
           <Shield size={40} color={theme.colors.goldForeground} />
         </View>
@@ -50,14 +52,14 @@ function VerificationGate() {
             {t.auth.logout}
           </Text>
         </TouchableOpacity>
-      </View>
+      </GlassCard>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   gate: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  gateCard: { width: '100%', maxWidth: 360, borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center' },
+  gateCard: { width: '100%', maxWidth: 360, padding: 28, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.15)' },
   gateIconWrap: { width: 80, height: 80, borderRadius: 40, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   gateTitle: { fontSize: 20, marginBottom: 10, textAlign: 'center' },
   gateDesc: { fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 8 },
@@ -88,14 +90,10 @@ export default function TabsLayout() {
     <>
       <NotificationPoller />
       <Tabs
+        tabBar={(props) => <TabBar {...props} />}
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: theme.colors.goldForeground,
-          tabBarInactiveTintColor: theme.colors.mutedForeground,
-          tabBarStyle: {
-            backgroundColor: theme.colors.card,
-            borderTopColor: theme.colors.border,
-          },
+          tabBarStyle: { display: 'none' },
         }}
       >
         <Tabs.Screen

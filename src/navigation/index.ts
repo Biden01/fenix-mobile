@@ -1,1 +1,1 @@
-export { BottomTabBar } from './BottomTabBar';
+export { TabBar } from '@/components/ui/TabBar';

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Bell,
@@ -24,6 +24,7 @@ import { useTheme } from '@/theme';
 import {
   ScreenWrapper,
   GradientCard,
+  GlassCard,
   RankBadge,
   StatCard,
   ProgressBar,
@@ -161,24 +162,27 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
           </Text>
           <TouchableOpacity
             onPress={onNotificationsPress}
-            style={[
-              styles.notificationButton,
-              {
-                backgroundColor: theme.colors.card,
-                borderRadius: theme.borderRadius.full,
-                padding: theme.spacing[2],
-              },
-            ]}
+            style={styles.notificationButton}
+            activeOpacity={0.8}
           >
-            <Bell size={24} color={theme.colors.foreground} />
+            <GlassCard
+              cornerRadius={theme.borderRadius.full}
+              style={{
+                padding: theme.spacing[2],
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: 'rgba(255,255,255,0.15)',
+              }}
+            >
+              <Bell size={24} color={theme.colors.foreground} />
+            </GlassCard>
             {unreadCount > 0 && (
               <View
                 style={[
                   styles.notificationDot,
                   {
                     backgroundColor: theme.semantic.error,
-                    top: 6,
-                    right: 6,
+                    top: 2,
+                    right: 2,
                   },
                 ]}
               >
@@ -388,35 +392,45 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
         {/* Quick Nav */}
         <View style={{ flexDirection: 'row', gap: theme.spacing[2], marginTop: theme.spacing[4], marginBottom: theme.spacing[2] }}>
           {([
-            { icon: Users,    label: 'Команда',    onPress: onTeamPress },
-            { icon: Trophy,   label: 'Ранг',       onPress: onRankPress },
-            { icon: BarChart2,label: 'Статистика', onPress: onStatisticsPress },
-            { icon: Ticket,   label: 'Конкурс',    onPress: onKonkursPress },
+            { icon: Users,    label: t.dashboard.navTeam,       onPress: onTeamPress },
+            { icon: Trophy,   label: t.dashboard.navRank,       onPress: onRankPress },
+            { icon: BarChart2,label: t.dashboard.navStatistics, onPress: onStatisticsPress },
+            { icon: Ticket,   label: t.dashboard.navKonkurs,    onPress: onKonkursPress },
           ] as const).map(({ icon: Icon, label, onPress }) => (
             <TouchableOpacity
               key={label}
               onPress={onPress}
-              style={{
-                flex: 1,
-                backgroundColor: theme.colors.card,
-                borderRadius: theme.borderRadius.lg,
-                padding: theme.spacing[3],
-                alignItems: 'center',
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-              }}
+              activeOpacity={0.8}
+              style={{ flex: 1 }}
             >
-              <Icon size={22} color={theme.colors.goldForeground} style={{ marginBottom: 4 }} />
-              <Text
-                numberOfLines={1}
+              <GlassCard
+                cornerRadius={theme.borderRadius.lg}
                 style={{
-                  fontSize: theme.fontSizes.xs,
-                  color: theme.colors.mutedForeground,
-                  fontFamily: theme.fonts.medium,
+                  padding: theme.spacing[3],
+                  alignItems: 'center',
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: 'rgba(255,255,255,0.15)',
                 }}
               >
-                {label}
-              </Text>
+                <View style={{
+                  width: 36, height: 36, borderRadius: 18,
+                  backgroundColor: `${theme.gold.primary}20`,
+                  alignItems: 'center', justifyContent: 'center',
+                  marginBottom: 6,
+                }}>
+                  <Icon size={18} color={theme.colors.goldForeground} />
+                </View>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: theme.fontSizes.xs,
+                    color: theme.colors.mutedForeground,
+                    fontFamily: theme.fonts.medium,
+                  }}
+                >
+                  {label}
+                </Text>
+              </GlassCard>
             </TouchableOpacity>
           ))}
         </View>
@@ -475,7 +489,7 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
                           backgroundColor: theme.gold.primary, borderRadius: 8,
                           paddingHorizontal: 5, paddingVertical: 2,
                         }}>
-                          <Text style={{ fontSize: 8, color: '#000', fontFamily: theme.fonts.bold }}>ВАШ</Text>
+                          <Text style={{ fontSize: 8, color: '#000', fontFamily: theme.fonts.bold }}>{t.dashboard.yourBadge}</Text>
                         </View>
                       ) : <View style={{ height: 18 }} />}
 
@@ -528,10 +542,10 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
             {/* Legend */}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12, marginTop: 4 }}>
               {[
-                { color: '#10b981', label: 'Завершено' },
-                { color: theme.gold.primary, label: 'Текущий' },
-                { color: '#3b82f6', label: 'Следующий' },
-                { color: undefined, label: 'Заблокирован' },
+                { color: '#10b981', label: t.dashboard.legendDone },
+                { color: theme.gold.primary, label: t.dashboard.legendCurrent },
+                { color: '#3b82f6', label: t.dashboard.legendNext },
+                { color: undefined, label: t.dashboard.legendLocked },
               ].map(({ color, label }) => (
                 <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <View style={{
@@ -569,8 +583,8 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
               const pct = (cur: number, req: number) =>
                 req > 0 ? Math.min(100, Math.round((cur / req) * 100)) : 0;
               const invLabel = nextRank.next > 7
-                ? 'Приглашения (лидеры)'
-                : 'Приглашения (лид+парт)';
+                ? t.rank.invitationsLeaders
+                : t.rank.invitationsAll;
               return (
                 <View style={{ flexDirection: 'row', gap: theme.spacing[3] }}>
                   {/* Левый столбец */}
@@ -592,7 +606,7 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
                       <View>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                           <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground }} numberOfLines={1}>
-                            {invLabel} — лев.
+                            {invLabel} — {t.rank.invLeft}
                           </Text>
                           <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.xs, color: theme.colors.foreground }}>
                             {(nextRank.leftInv.current ?? 0).toLocaleString('ru-KZ')} / {(nextRank.leftInv.required ?? 0).toLocaleString('ru-KZ')}
@@ -622,7 +636,7 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
                       <View>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                           <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground }} numberOfLines={1}>
-                            {invLabel} — прав.
+                            {invLabel} — {t.rank.invRight}
                           </Text>
                           <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.xs, color: theme.colors.foreground }}>
                             {(nextRank.rightInv.current ?? 0).toLocaleString('ru-KZ')} / {(nextRank.rightInv.required ?? 0).toLocaleString('ru-KZ')}

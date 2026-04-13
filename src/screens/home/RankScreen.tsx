@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, RefreshControl, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, RefreshControl, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { ChevronLeft, Trophy, Gift, Target, ArrowLeft, ArrowRight, TrendingUp } from 'lucide-react-native';
 import { RankIconSvg, RANK_ICON_COLORS } from '@/components/ui/RankIconSvg';
 import { RANK_REWARDS } from '@/components/ui/RankBadge';
@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store';
 import { useT } from '@/i18n';
 import { ScreenWrapper } from '@/components/ui/ScreenWrapper';
 import { GradientCard } from '@/components/ui/GradientCard';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { rankService, RankProgressResponse } from '@/api';
 import { apiClient } from '@/api/client';
@@ -103,8 +104,8 @@ export function RankScreen({ onBack, hideHeader }: Props) {
   const weakRef = Math.min(leftRef, rightRef);
 
   const invLabel = nextRang && nextRang <= RANK_LEADER_CLIENT_SPLIT
-    ? 'Приглашения (лидер+партнёр)'
-    : 'Приглашения (лидеры)';
+    ? t.rank.invitationsAll
+    : t.rank.invitationsLeaders;
 
   const qvProgress = nextMilestone > 0 ? Math.min(100, (weakLeg / nextMilestone) * 100) : 100;
   const refProgress = nextRef > 0 ? Math.min(100, (weakRef / nextRef) * 100) : 100;
@@ -120,8 +121,7 @@ export function RankScreen({ onBack, hideHeader }: Props) {
     },
     backBtn: {
       padding: 8,
-      borderRadius: theme.borderRadius.md,
-      backgroundColor: theme.colors.muted,
+      borderRadius: theme.borderRadius.full,
     },
     title: {
       fontSize: theme.fontSizes.lg,
@@ -329,10 +329,10 @@ export function RankScreen({ onBack, hideHeader }: Props) {
     historyItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 12,
+      paddingVertical: 14,
       paddingHorizontal: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: 'rgba(255,255,255,0.08)',
       gap: 12,
     },
     historyIcon: {
@@ -370,12 +370,14 @@ export function RankScreen({ onBack, hideHeader }: Props) {
     >
       {!hideHeader && (
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-            <ChevronLeft size={20} color={theme.colors.foreground} />
+          <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
+            <GlassCard cornerRadius={theme.borderRadius.full} style={styles.backBtn}>
+              <ChevronLeft size={20} color={theme.colors.foreground} />
+            </GlassCard>
           </TouchableOpacity>
           <View>
-            <Text style={styles.title}>Мой ранг</Text>
-            <Text style={styles.subtitle}>Прогресс и история</Text>
+            <Text style={styles.title}>{t.rank.title}</Text>
+            <Text style={styles.subtitle}>{t.rank.subtitle}</Text>
           </View>
         </View>
       )}
@@ -386,12 +388,12 @@ export function RankScreen({ onBack, hideHeader }: Props) {
           <RankIconSvg rank={currentRang} size={40} color={theme.colors.goldForeground} />
         </View>
         <Text style={styles.currentRankName}>
-          {progress?.current_rank_name || RANG_NAMES[currentRang] || `Ранг ${currentRang}`}
+          {progress?.current_rank_name || RANG_NAMES[currentRang] || `${t.rank.levelLabel} ${currentRang}`}
         </Text>
-        <Text style={styles.rankNumber}>Уровень {currentRang} из 12</Text>
+        <Text style={styles.rankNumber}>{t.rank.level} {currentRang} {t.rank.of} 12</Text>
         {currentRang > 0 && RANK_REWARDS[currentRang] && (
           <Text style={{ fontSize: theme.fontSizes.xs, color: theme.colors.goldForeground, marginTop: 4, opacity: 0.8 }}>
-            Награда: {RANK_REWARDS[currentRang]}
+            {t.rank.currentReward}: {RANK_REWARDS[currentRang]}
           </Text>
         )}
       </GradientCard>
@@ -404,9 +406,9 @@ export function RankScreen({ onBack, hideHeader }: Props) {
               <Trophy size={22} color={theme.colors.goldForeground} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.nextRankLabel}>Текущий ранг</Text>
+              <Text style={styles.nextRankLabel}>{t.rank.currentRankLabel}</Text>
               <Text style={{ ...styles.nextRankName, color: theme.colors.goldForeground }}>
-                {RANG_NAMES[currentRang] || 'Новичок'}
+                {RANG_NAMES[currentRang] || t.rank.novice}
               </Text>
             </View>
           </View>
@@ -440,25 +442,25 @@ export function RankScreen({ onBack, hideHeader }: Props) {
       <View style={styles.statsRow}>
         <GradientCard variant="default" padding={0} style={styles.statCard}>
           <ArrowLeft size={14} color="#60a5fa" style={{ marginBottom: 4 }} />
-          <Text style={styles.statLabel}>Левая ветка</Text>
+          <Text style={styles.statLabel}>{t.rank.leftBranch}</Text>
           <Text style={[styles.statValue, { color: '#60a5fa' }]}>{fmt(leftQv)}</Text>
           <Text style={styles.statSuffix}>QV</Text>
         </GradientCard>
         <GradientCard variant="default" padding={0} style={styles.statCard}>
           <ArrowRight size={14} color="#a78bfa" style={{ marginBottom: 4 }} />
-          <Text style={styles.statLabel}>Правая ветка</Text>
+          <Text style={styles.statLabel}>{t.rank.rightBranch}</Text>
           <Text style={[styles.statValue, { color: '#a78bfa' }]}>{fmt(rightQv)}</Text>
           <Text style={styles.statSuffix}>QV</Text>
         </GradientCard>
         <GradientCard variant="default" padding={0} style={styles.statCard}>
           <Target size={14} color={theme.colors.goldForeground} style={{ marginBottom: 4 }} />
-          <Text style={styles.statLabel}>Слабая нога</Text>
+          <Text style={styles.statLabel}>{t.rank.weakLeg}</Text>
           <Text style={[styles.statValue, { color: theme.colors.goldForeground }]}>{fmt(weakLeg)}</Text>
           <Text style={styles.statSuffix}>QV</Text>
         </GradientCard>
         <GradientCard variant="default" padding={0} style={styles.statCard}>
           <TrendingUp size={14} color="#22c55e" style={{ marginBottom: 4 }} />
-          <Text style={styles.statLabel}>Общий объём</Text>
+          <Text style={styles.statLabel}>{t.rank.totalVolume}</Text>
           <Text style={[styles.statValue, { color: '#22c55e' }]}>{fmt(totalQv)}</Text>
           <Text style={styles.statSuffix}>QV</Text>
         </GradientCard>
@@ -468,13 +470,13 @@ export function RankScreen({ onBack, hideHeader }: Props) {
       {nextRang && (
         <>
           <Text style={styles.sectionTitle}>
-            Требования для «{progress?.next_rank_name || RANG_NAMES[nextRang]}»
+            {t.rank.requirementsFor} «{progress?.next_rank_name || RANG_NAMES[nextRang]}»
           </Text>
           <GradientCard variant="default" padding={14} style={styles.requireCard}>
             {/* QV progress */}
             <View style={styles.reqBlock}>
               <View style={styles.reqRow}>
-                <Text style={styles.reqLabel}>Объём слабой ноги</Text>
+                <Text style={styles.reqLabel}>{t.rank.weakLegVolume}</Text>
                 <View style={[styles.reqBadge, weakLeg >= nextMilestone && styles.reqBadgeDone]}>
                   <Text style={styles.reqBadgeText}>{qvProgress.toFixed(1)}%</Text>
                 </View>
@@ -483,7 +485,7 @@ export function RankScreen({ onBack, hideHeader }: Props) {
               <ProgressBar value={Math.round(qvProgress)} variant="info" />
               {qvRemaining > 0 && (
                 <Text style={styles.reqRemaining}>
-                  Осталось: <Text style={{ color: '#60a5fa', fontFamily: theme.fonts.medium }}>{fmt(qvRemaining)} QV</Text>
+                  {t.rank.remaining}: <Text style={{ color: '#60a5fa', fontFamily: theme.fonts.medium }}>{fmt(qvRemaining)} QV</Text>
                 </Text>
               )}
             </View>
@@ -492,7 +494,7 @@ export function RankScreen({ onBack, hideHeader }: Props) {
             {nextRef > 0 && (
               <View style={styles.reqBlock}>
                 <View style={styles.reqRow}>
-                  <Text style={styles.reqLabel}>{invLabel} (слабая нога)</Text>
+                  <Text style={styles.reqLabel}>{invLabel} ({t.rank.weakLeg})</Text>
                   <View style={[styles.reqBadge, weakRef >= nextRef && styles.reqBadgeDone]}>
                     <Text style={styles.reqBadgeText}>{refProgress.toFixed(1)}%</Text>
                   </View>
@@ -501,7 +503,7 @@ export function RankScreen({ onBack, hideHeader }: Props) {
                 <ProgressBar value={Math.round(refProgress)} variant="warning" />
                 {refRemaining > 0 && (
                   <Text style={styles.reqRemaining}>
-                    Осталось: <Text style={{ color: '#a78bfa', fontFamily: theme.fonts.medium }}>{fmt(refRemaining)} QV</Text>
+                    {t.rank.remaining}: <Text style={{ color: '#a78bfa', fontFamily: theme.fonts.medium }}>{fmt(refRemaining)} QV</Text>
                   </Text>
                 )}
               </View>
@@ -511,31 +513,31 @@ export function RankScreen({ onBack, hideHeader }: Props) {
             {progress && (
               <>
                 <View style={styles.detailBlock}>
-                  <Text style={styles.detailTitle}>{invLabel} — детали</Text>
+                  <Text style={styles.detailTitle}>{invLabel} — {t.rank.details}</Text>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailKey}>Левая нога</Text>
+                    <Text style={styles.detailKey}>{t.rank.leftLeg}</Text>
                     <Text style={styles.detailVal}>{fmt(leftRef)} QV</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailKey}>Правая нога</Text>
+                    <Text style={styles.detailKey}>{t.rank.rightLeg}</Text>
                     <Text style={styles.detailVal}>{fmt(rightRef)} QV</Text>
                   </View>
                   <View style={styles.detailSep} />
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailKey}>Требуется на каждой</Text>
+                    <Text style={styles.detailKey}>{t.rank.requiredEach}</Text>
                     <Text style={styles.detailReq}>{fmt(nextRef)} QV</Text>
                   </View>
                 </View>
 
                 {(progress.left_week_qv > 0 || progress.right_week_qv > 0) && (
                   <View style={styles.detailBlock}>
-                    <Text style={styles.detailTitle}>Объём за неделю</Text>
+                    <Text style={styles.detailTitle}>{t.rank.weekVolume}</Text>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailKey}>Левая</Text>
+                      <Text style={styles.detailKey}>{t.rank.left}</Text>
                       <Text style={[styles.weekVal, { color: '#60a5fa' }]}>{fmt(progress.left_week_qv)} QV</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailKey}>Правая</Text>
+                      <Text style={styles.detailKey}>{t.rank.right}</Text>
                       <Text style={[styles.weekVal, { color: '#a78bfa' }]}>{fmt(progress.right_week_qv)} QV</Text>
                     </View>
                   </View>
@@ -547,12 +549,12 @@ export function RankScreen({ onBack, hideHeader }: Props) {
       )}
 
       {/* Rank history */}
-      <Text style={styles.historyTitle}>История рангов</Text>
+      <Text style={styles.historyTitle}>{t.rank.history}</Text>
       <GradientCard variant="default" padding={0}>
         {loading ? (
-          <Text style={styles.emptyText}>Загрузка...</Text>
+          <Text style={styles.emptyText}>{t.common.loading}</Text>
         ) : history.length === 0 ? (
-          <Text style={styles.emptyText}>История рангов пуста</Text>
+          <Text style={styles.emptyText}>{t.rank.historyEmpty}</Text>
         ) : (
           <React.Fragment>
             {history.map((item, index) => (
@@ -571,7 +573,7 @@ export function RankScreen({ onBack, hideHeader }: Props) {
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={{ fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground }}>
-                    Ур. {item.rank}
+                    {t.rank.levelLabel} {item.rank}
                   </Text>
                 </View>
               </View>

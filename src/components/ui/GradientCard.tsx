@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ViewStyle, Platform } from 'react-native';
+import { View, ViewStyle, Platform, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/theme';
 
@@ -85,13 +85,17 @@ export function GradientCard({
       <View
         style={[
           {
-            backgroundColor: theme.isDark ? 'rgba(15, 15, 24, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: theme.isDark ? 'rgba(15, 15, 24, 0.7)' : 'rgba(255, 255, 255, 0.7)',
             borderRadius: theme.borderRadius['2xl'],
             padding: getPadding(),
-            borderWidth: noBorder ? 0 : 1,
-            borderColor: theme.colors.border,
+            borderWidth: noBorder ? 0 : StyleSheet.hairlineWidth,
+            borderColor: 'rgba(255,255,255,0.15)',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.12,
+            shadowRadius: 24,
+            elevation: 8,
           },
-          theme.shadows.md,
           style,
         ]}
       >
@@ -107,10 +111,14 @@ export function GradientCard({
           backgroundColor: theme.colors.card,
           borderRadius: theme.borderRadius['2xl'],
           padding: getPadding(),
-          borderWidth: noBorder ? 0 : 1,
-          borderColor: theme.colors.border,
+          borderWidth: noBorder ? 0 : StyleSheet.hairlineWidth,
+          borderColor: 'rgba(255,255,255,0.1)',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.12,
+          shadowRadius: 20,
+          elevation: 6,
         },
-        theme.shadows.md,
         style,
       ]}
     >

@@ -1,19 +1,16 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Platform } from 'react-native';
 import { ChevronLeft, User, Search, X } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { useT } from '@/i18n';
 import { ScreenWrapper } from '@/components/ui/ScreenWrapper';
 import { GradientCard } from '@/components/ui/GradientCard';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { apiClient } from '@/api/client';
 import { ENDPOINTS } from '@/api/config';
 
 const PER_PAGE = 20;
 
-const RANG_NAMES: Record<number, string> = {
-  0: '—', 1: 'Партнёр', 2: 'Менеджер', 3: 'Директор',
-  4: 'Серебро', 5: 'Золото', 6: 'Платина', 7: 'Бриллиант',
-  8: 'Корона', 9: 'Топ', 10: 'Президент', 11: 'Вице-Президент', 12: 'Посол',
-};
 
 interface Referral {
   id: number;
@@ -37,6 +34,7 @@ interface Props {
 
 export function TeamScreen({ onBack, hideHeader }: Props) {
   const theme = useTheme();
+  const t = useT();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [total, setTotal] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -129,8 +127,7 @@ export function TeamScreen({ onBack, hideHeader }: Props) {
     },
     backBtn: {
       padding: 8,
-      borderRadius: theme.borderRadius.md,
-      backgroundColor: theme.colors.muted,
+      borderRadius: theme.borderRadius.full,
     },
     title: {
       fontSize: theme.fontSizes.lg,
@@ -145,13 +142,13 @@ export function TeamScreen({ onBack, hideHeader }: Props) {
     searchContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.colors.card,
-      borderRadius: theme.borderRadius.lg,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: 'rgba(255,255,255,0.15)',
       paddingHorizontal: 12,
       marginBottom: 16,
-      height: 44,
+      height: 48,
+      overflow: 'hidden',
     },
     searchInput: {
       flex: 1,
@@ -181,19 +178,21 @@ export function TeamScreen({ onBack, hideHeader }: Props) {
     item: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 12,
+      paddingVertical: 14,
       paddingHorizontal: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: 'rgba(255,255,255,0.08)',
       gap: 12,
     },
     avatar: {
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: theme.colors.muted,
+      backgroundColor: `${theme.gold.primary}18`,
       alignItems: 'center',
       justifyContent: 'center',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: `${theme.gold.primary}30`,
     },
     name: {
       fontSize: theme.fontSizes.sm,
@@ -233,22 +232,24 @@ export function TeamScreen({ onBack, hideHeader }: Props) {
     >
       {!hideHeader && (
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-            <ChevronLeft size={20} color={theme.colors.foreground} />
+          <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
+            <GlassCard cornerRadius={theme.borderRadius.full} style={styles.backBtn}>
+              <ChevronLeft size={20} color={theme.colors.foreground} />
+            </GlassCard>
           </TouchableOpacity>
           <View>
-            <Text style={styles.title}>Моя команда</Text>
-            <Text style={styles.subtitle}>Прямые рефералы</Text>
+            <Text style={styles.title}>{t.team.title}</Text>
+            <Text style={styles.subtitle}>{t.team.subtitle}</Text>
           </View>
         </View>
       )}
 
       {/* Search */}
-      <View style={styles.searchContainer}>
+      <GlassCard cornerRadius={theme.borderRadius.xl} style={styles.searchContainer}>
         <Search size={16} color={theme.colors.mutedForeground} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Поиск по имени или ID..."
+          placeholder={t.team.searchPlaceholder}
           placeholderTextColor={theme.colors.mutedForeground}
           value={search}
           onChangeText={setSearch}
@@ -260,26 +261,26 @@ export function TeamScreen({ onBack, hideHeader }: Props) {
             <X size={16} color={theme.colors.mutedForeground} />
           </TouchableOpacity>
         )}
-      </View>
+      </GlassCard>
 
       {/* Summary */}
       <View style={styles.summaryRow}>
         <GradientCard variant="gold" style={styles.summaryCard}>
           <View style={{ alignItems: 'center' }}>
             <Text style={styles.summaryValue}>{total}</Text>
-            <Text style={styles.summaryLabel}>Всего</Text>
+            <Text style={styles.summaryLabel}>{t.team.total}</Text>
           </View>
         </GradientCard>
         <GradientCard variant="default" style={styles.summaryCard}>
           <View style={{ alignItems: 'center' }}>
             <Text style={[styles.summaryValue, { color: theme.colors.foreground }]}>{leaders}</Text>
-            <Text style={styles.summaryLabel}>Лидеров</Text>
+            <Text style={styles.summaryLabel}>{t.team.leaders}</Text>
           </View>
         </GradientCard>
         <GradientCard variant="default" style={styles.summaryCard}>
           <View style={{ alignItems: 'center' }}>
             <Text style={[styles.summaryValue, { color: theme.colors.foreground }]}>{clients}</Text>
-            <Text style={styles.summaryLabel}>Клиентов</Text>
+            <Text style={styles.summaryLabel}>{t.team.clients}</Text>
           </View>
         </GradientCard>
       </View>
@@ -292,7 +293,7 @@ export function TeamScreen({ onBack, hideHeader }: Props) {
           </View>
         ) : referrals.length === 0 ? (
           <Text style={styles.emptyText}>
-            {search ? 'Ничего не найдено' : 'Нет рефералов'}
+            {search ? t.team.notFound : t.team.noReferrals}
           </Text>
         ) : (
           <FlatList
@@ -319,9 +320,9 @@ export function TeamScreen({ onBack, hideHeader }: Props) {
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.badge}>
-                    {RANG_NAMES[item.rang] || `Ранг ${item.rang}`}
+                    {t.team.rankNames[item.rang as keyof typeof t.team.rankNames] || `${t.team.rank} ${item.rang}`}
                   </Text>
-                  <Text style={styles.typeLabel}>Статус {item.status}</Text>
+                  <Text style={styles.typeLabel}>{t.team.status} {item.status}</Text>
                 </View>
               </View>
             )}

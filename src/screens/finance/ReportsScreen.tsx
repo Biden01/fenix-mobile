@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, 
 import { ArrowLeft, Users, Gift, Percent, Zap, Clock, ArrowDownCircle } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/theme';
-import { GradientCard, Tabs, StatusBadge } from '@/components/ui';
+import { GradientCard, GlassCard, StatusBadge, GlassSegmentedPicker, GlassButton } from '@/components/ui';
 import { financeService, TransferHistoryItem, BinaryBonusItem, BbsItem, PassiveHistoryItem, UplineItem } from '@/api';
 import { useT } from '@/i18n';
 
@@ -95,7 +95,7 @@ export function ReportsScreen({ onBack, hideHeader, isModal }: ReportsScreenProp
             id: item.id.toString(),
             date: item.sent_time,
             amount: parseFloat(item.amount),
-            from: item.user_login || 'Система',
+            from: item.user_login || t.finance.system,
             level: item.line,
           });
         } else {
@@ -361,7 +361,7 @@ export function ReportsScreen({ onBack, hideHeader, isModal }: ReportsScreenProp
         </View>
         <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
           <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>
-            BBS бонус · {item.partners} партн.
+            {t.reports.bbsBonus} · {item.partners} {t.reports.partnersAbbr}
           </Text>
           <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>
             {new Date(item.post_time).toLocaleDateString('ru-RU')}
@@ -382,7 +382,7 @@ export function ReportsScreen({ onBack, hideHeader, isModal }: ReportsScreenProp
         </View>
         <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
           <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>
-            Пассивный кэшбэк · мес. {item.month_no}
+            {t.reports.passiveCashbackMonth} {item.month_no}
           </Text>
           <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>
             {new Date(item.paid_at).toLocaleDateString('ru-RU')}
@@ -453,11 +453,13 @@ export function ReportsScreen({ onBack, hideHeader, isModal }: ReportsScreenProp
         </View>
       ) : !hideHeader ? (
         <View style={[styles.header, { paddingTop: 60, paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: theme.spacing[4] }]}>
-          <TouchableOpacity
-            onPress={onBack}
-            style={[styles.backButton, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.full, padding: theme.spacing[2] }]}
-          >
-            <ArrowLeft size={24} color={theme.colors.foreground} />
+          <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
+            <GlassCard
+              cornerRadius={theme.borderRadius.full}
+              style={[styles.backButton, { padding: theme.spacing[2] }]}
+            >
+              <ArrowLeft size={24} color={theme.colors.foreground} />
+            </GlassCard>
           </TouchableOpacity>
           <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes.xl, color: theme.colors.foreground, flex: 1, textAlign: 'center' }}>
             {t.reports.title}
@@ -466,19 +468,19 @@ export function ReportsScreen({ onBack, hideHeader, isModal }: ReportsScreenProp
         </View>
       ) : null}
 
-      <View style={{ paddingHorizontal: theme.screenPadding.horizontal }}>
-        <Tabs
-          tabs={[
-            { key: 'referral', label: t.reports.referral },
-            { key: 'binary', label: t.reports.binary },
-            { key: 'bbs', label: t.reports.bbs },
-            { key: 'passive', label: t.reports.passive },
-            { key: 'cashback', label: t.reports.cashback },
-            { key: 'upline', label: t.reports.upline },
+      <View style={{ paddingHorizontal: theme.screenPadding.horizontal, marginBottom: theme.spacing[4] }}>
+        <GlassSegmentedPicker
+          items={[
+            { id: 'referral', label: t.reports.referral },
+            { id: 'binary', label: t.reports.binary },
+            { id: 'bbs', label: t.reports.bbs },
+            { id: 'passive', label: t.reports.passive },
+            { id: 'cashback', label: t.reports.cashback },
+            { id: 'upline', label: t.reports.upline },
           ]}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          style={{ marginBottom: theme.spacing[4] }}
+          selectedId={activeTab}
+          onSelect={setActiveTab}
+          tint="#FFD700"
         />
       </View>
 
@@ -506,20 +508,12 @@ export function ReportsScreen({ onBack, hideHeader, isModal }: ReportsScreenProp
                 {currentLoading() ? (
                   <ActivityIndicator size="small" color={theme.colors.goldForeground} />
                 ) : currentHasMore() ? (
-                  <TouchableOpacity
+                  <GlassButton
+                    label={t.reports.loadMore}
+                    icon="arrow.down.circle"
+                    tint="#FFD700"
                     onPress={handleLoadMore}
-                    style={{
-                      paddingHorizontal: 24,
-                      paddingVertical: 10,
-                      borderRadius: theme.borderRadius.lg,
-                      borderWidth: 1,
-                      borderColor: theme.gold.primary,
-                    }}
-                  >
-                    <Text style={{ color: theme.colors.goldForeground, fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm }}>
-                      Загрузить ещё
-                    </Text>
-                  </TouchableOpacity>
+                  />
                 ) : null}
               </View>
             ) : null

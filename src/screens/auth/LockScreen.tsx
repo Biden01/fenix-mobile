@@ -6,12 +6,16 @@ import {
   StyleSheet,
   Vibration,
   Alert,
+  Platform,
 } from 'react-native';
 import { Delete, Fingerprint } from 'lucide-react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/theme';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { useLockStore } from '@/store/lockStore';
 import { useAuthStore } from '@/store';
+import { useT } from '@/i18n';
 
 const PAD = [
   ['1', '2', '3'],
@@ -28,6 +32,7 @@ interface LockScreenProps {
 
 export function LockScreen({ onUnlock }: LockScreenProps) {
   const theme = useTheme();
+  const t = useT();
   const { verifyPin, biometricEnabled, unlock } = useLockStore();
   const { logout } = useAuthStore();
   const [pin, setPin] = useState('');
@@ -47,9 +52,9 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
 
   const tryBiometric = useCallback(async () => {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Войти в Fenix',
-      fallbackLabel: 'Использовать PIN',
-      cancelLabel: 'Отмена',
+      promptMessage: t.lock.biometricPrompt,
+      fallbackLabel: t.lock.biometricFallback,
+      cancelLabel: t.common.cancel,
     });
     if (result.success) {
       unlock();
@@ -90,9 +95,9 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
           const next = a + 1;
           if (next >= 5) {
             Alert.alert(
-              'Слишком много попыток',
-              'Вы будете выйдены из аккаунта.',
-              [{ text: 'OK', onPress: logout }]
+              t.lock.tooManyAttempts,
+              t.lock.tooManyAttemptsMsg,
+              [{ text: t.common.ok, onPress: logout }]
             );
           }
           return next;
@@ -108,14 +113,20 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   const dots = Array.from({ length: PIN_LENGTH }, (_, i) => i < pin.length);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={theme.isDark
+          ? ['#0a0a14', '#0f0f1e', '#0a0a14']
+          : ['#f5f5f8', '#eeeef5', '#f5f5f8']}
+        style={StyleSheet.absoluteFill}
+      />
       {/* Logo / title */}
       <View style={styles.top}>
-        <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: 32, color: theme.colors.goldForeground }}>
+        <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: 36, color: theme.colors.goldForeground }}>
           Fenix
         </Text>
         <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, marginTop: 8 }}>
-          Введите PIN-код
+          {t.lock.enterPin}
         </Text>
       </View>
 
@@ -145,7 +156,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
 
       {/* Error hint */}
       <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.semantic.error, height: 18, marginBottom: 8 }}>
-        {error ? `Неверный PIN${attempts > 2 ? ` (осталось ${5 - attempts} попыток)` : ''}` : ''}
+        {error ? `${t.lock.wrongPin}${attempts > 2 ? ` (${t.lock.attemptsLeft} ${5 - attempts} ${t.lock.attempts})` : ''}` : ''}
       </Text>
 
       {/* Keypad */}
@@ -180,16 +191,13 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                 <TouchableOpacity
                   key={key}
                   onPress={() => handleKey(key)}
-                  style={[
-                    styles.key,
-                    styles.numKey,
-                    {
-                      backgroundColor: theme.colors.card,
-                      borderColor: theme.colors.border,
-                    },
-                  ]}
-                  activeOpacity={0.6}
+                  style={[styles.key, styles.numKey]}
+                  activeOpacity={0.7}
                 >
+                  <GlassCard
+                    cornerRadius={40}
+                    style={StyleSheet.absoluteFill}
+                  />
                   <Text style={{ fontFamily: theme.fonts.bold, fontSize: 24, color: theme.colors.foreground }}>
                     {key}
                   </Text>
@@ -203,7 +211,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
       {/* Logout link */}
       <TouchableOpacity onPress={logout} style={{ marginTop: 32 }}>
         <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground }}>
-          Выйти из аккаунта
+          {t.lock.logout}
         </Text>
       </TouchableOpacity>
     </View>
@@ -220,16 +228,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 2,
   },
-  pad: { gap: 12 },
-  row: { flexDirection: 'row', gap: 16 },
+  pad: { gap: 14 },
+  row: { flexDirection: 'row', gap: 18 },
   key: {
-    width: 80,
-    height: 80,
+    width: 82,
+    height: 82,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 40,
+    borderRadius: 41,
+    overflow: 'hidden',
   },
-  numKey: {
-    borderWidth: 1,
-  },
+  numKey: {},
 });

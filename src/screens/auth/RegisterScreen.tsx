@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { ArrowLeft, User, Phone, Mail, Lock, Search, MapPin, CheckCircle, Square, CheckSquare } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { GoldButton, GlassInput, GradientCard } from '@/components/ui';
+import { GoldButton, GlassInput, GlassCard, GradientCard } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { authService } from '@/api';
 import { useT } from '@/i18n';
@@ -101,7 +101,7 @@ export function RegisterScreen({
     }
 
     if (partnerType === null) {
-      setLocalError('Выберите тип партнёрства');
+      setLocalError(t.auth.selectPartnerType);
       return;
     }
 
@@ -131,7 +131,7 @@ export function RegisterScreen({
     }
 
     if (!ageConfirmed) {
-      setLocalError('Необходимо подтвердить, что вам 18 лет или больше');
+      setLocalError(t.auth.ageConfirmRequired);
       return;
     }
 
@@ -165,12 +165,12 @@ export function RegisterScreen({
       <View style={[styles.container, { backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
         <CheckCircle size={64} color={theme.semantic.success} style={{ marginBottom: 20 }} />
         <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes['2xl'], color: theme.colors.foreground, textAlign: 'center', marginBottom: 12 }}>
-          Заявка отправлена!
+          {t.auth.registrationSent}
         </Text>
         <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.md, color: theme.colors.mutedForeground, textAlign: 'center', marginBottom: 32 }}>
-          Ваш аккаунт создан и ожидает активации администратором. После активации вы сможете войти в систему.
+          {t.auth.registrationPending}
         </Text>
-        <GoldButton title="На страницу входа" onPress={onBack} />
+        <GoldButton title={t.auth.backToLogin} onPress={onBack} />
       </View>
     );
   }
@@ -186,18 +186,13 @@ export function RegisterScreen({
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={onBack}
-            style={[
-              styles.backButton,
-              {
-                backgroundColor: theme.colors.card,
-                borderRadius: theme.borderRadius.full,
-                padding: theme.spacing[2],
-              },
-            ]}
-          >
-            <ArrowLeft size={24} color={theme.colors.foreground} />
+          <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
+            <GlassCard
+              cornerRadius={theme.borderRadius.full}
+              style={[styles.backButton, { padding: theme.spacing[2] }]}
+            >
+              <ArrowLeft size={24} color={theme.colors.foreground} />
+            </GlassCard>
           </TouchableOpacity>
           <Text
             style={[
@@ -321,26 +316,30 @@ export function RegisterScreen({
 
           {/* Тип партнёрства */}
           <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, marginBottom: theme.spacing[2] }}>
-            Тип партнёрства *
+            {t.auth.partnerType} *
           </Text>
           <View style={{ flexDirection: 'row', gap: theme.spacing[2], marginBottom: theme.spacing[3] }}>
-            {([{ label: 'Лидер', value: 1 }, { label: 'Клиент', value: 0 }] as const).map(opt => (
+            {([{ label: t.auth.leader, value: 1 }, { label: t.auth.client, value: 0 }] as const).map(opt => (
               <TouchableOpacity
                 key={opt.value}
                 onPress={() => setPartnerType(opt.value)}
-                style={{
-                  flex: 1,
-                  paddingVertical: theme.spacing[2],
-                  borderRadius: theme.borderRadius.lg,
-                  borderWidth: 1,
-                  borderColor: partnerType === opt.value ? theme.colors.primary : theme.colors.border,
-                  backgroundColor: partnerType === opt.value ? `${theme.colors.primary}20` : 'transparent',
-                  alignItems: 'center',
-                }}
+                activeOpacity={0.8}
+                style={{ flex: 1 }}
               >
-                <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: partnerType === opt.value ? theme.colors.primary : theme.colors.mutedForeground }}>
-                  {opt.label}
-                </Text>
+                <GlassCard
+                  cornerRadius={theme.borderRadius.lg}
+                  tint={partnerType === opt.value ? theme.gold.primary : '#ffffff'}
+                  style={{
+                    paddingVertical: theme.spacing[2],
+                    alignItems: 'center',
+                    borderWidth: partnerType === opt.value ? 1.5 : StyleSheet.hairlineWidth,
+                    borderColor: partnerType === opt.value ? theme.gold.primary : 'rgba(255,255,255,0.15)',
+                  }}
+                >
+                  <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: partnerType === opt.value ? theme.colors.goldForeground : theme.colors.mutedForeground }}>
+                    {opt.label}
+                  </Text>
+                </GlassCard>
               </TouchableOpacity>
             ))}
           </View>
@@ -421,30 +420,30 @@ export function RegisterScreen({
           />
 
           <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, marginBottom: theme.spacing[2] }}>
-            Страна *
+            {t.auth.country} *
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing[2] }}>
             {COUNTRIES.map(opt => (
-              <TouchableOpacity
-                key={opt.code}
-                onPress={() => setCountry(opt.code)}
-                style={{
-                  paddingVertical: theme.spacing[2],
-                  paddingHorizontal: theme.spacing[3],
-                  borderRadius: theme.borderRadius.lg,
-                  borderWidth: 1,
-                  borderColor: country === opt.code ? theme.colors.primary : theme.colors.border,
-                  backgroundColor: country === opt.code ? `${theme.colors.primary}20` : 'transparent',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: country === opt.code ? theme.colors.primary : theme.colors.mutedForeground }}>
-                  {opt.label}
-                </Text>
-                <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginLeft: 4 }}>
-                  {opt.currency}
-                </Text>
+              <TouchableOpacity key={opt.code} onPress={() => setCountry(opt.code)} activeOpacity={0.8}>
+                <GlassCard
+                  cornerRadius={theme.borderRadius.lg}
+                  tint={country === opt.code ? theme.gold.primary : '#ffffff'}
+                  style={{
+                    paddingVertical: theme.spacing[2],
+                    paddingHorizontal: theme.spacing[3],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    borderWidth: country === opt.code ? 1.5 : StyleSheet.hairlineWidth,
+                    borderColor: country === opt.code ? theme.gold.primary : 'rgba(255,255,255,0.15)',
+                  }}
+                >
+                  <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: country === opt.code ? theme.colors.goldForeground : theme.colors.mutedForeground }}>
+                    {opt.label}
+                  </Text>
+                  <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginLeft: 4 }}>
+                    {opt.currency}
+                  </Text>
+                </GlassCard>
               </TouchableOpacity>
             ))}
           </View>
@@ -460,19 +459,19 @@ export function RegisterScreen({
             : <Square size={22} color={theme.colors.mutedForeground} />
           }
           <Text style={{ flex: 1, fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, lineHeight: 20 }}>
-            {'Мне исполнилось 18 лет. Я принимаю '}
+            {t.auth.ageConfirm}
             <Text
               style={{ color: theme.colors.goldForeground, textDecorationLine: 'underline' }}
               onPress={() => Linking.openURL('https://fenixinternationalcompany.kz/terms')}
             >
-              условия использования
+              {t.auth.termsOfUse}
             </Text>
             {' и '}
             <Text
               style={{ color: theme.colors.goldForeground, textDecorationLine: 'underline' }}
               onPress={() => Linking.openURL('https://fenixinternationalcompany.kz/privacy')}
             >
-              политику конфиденциальности
+              {t.auth.privacyPolicy}
             </Text>
             .
           </Text>
