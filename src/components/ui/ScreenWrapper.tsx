@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, StatusBar, ViewStyle, ScrollView, RefreshControlProps } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
 
 interface ScreenWrapperProps {
@@ -23,6 +23,7 @@ export function ScreenWrapper({
   refreshControl,
 }: ScreenWrapperProps) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const Container = safeArea ? SafeAreaView : View;
 
@@ -45,7 +46,7 @@ export function ScreenWrapper({
           style={innerStyle}
           contentContainerStyle={[
             {
-              paddingBottom: theme.dimensions.tabBarHeight + theme.spacing[4],
+              paddingBottom: theme.dimensions.tabBarHeight + Math.max(insets.bottom, theme.spacing[4]),
               paddingTop: theme.screenPadding.top,
             },
             contentContainerStyle,
@@ -71,7 +72,7 @@ export function ScreenWrapper({
           innerStyle,
           {
             paddingTop: theme.screenPadding.top,
-            paddingBottom: theme.dimensions.tabBarHeight,
+            paddingBottom: theme.dimensions.tabBarHeight + Math.max(insets.bottom, theme.spacing[2]),
           },
           contentContainerStyle,
         ]}

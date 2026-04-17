@@ -3,6 +3,17 @@ const path = require('path');
 
 const googleServicesFile = './google-services.json';
 const hasGoogleServices = fs.existsSync(path.resolve(__dirname, googleServicesFile));
+const buildProfile = process.env.EAS_BUILD_PROFILE ?? '';
+const buildPlatform = process.env.EAS_BUILD_PLATFORM ?? '';
+const requiresAndroidGoogleServices =
+  ['preview', 'production'].includes(buildProfile) &&
+  ['android', 'all'].includes(buildPlatform);
+
+if (requiresAndroidGoogleServices && !hasGoogleServices) {
+  throw new Error(
+    'Android preview/production build requires ./google-services.json for Expo push notifications.'
+  );
+}
 
 // Config plugin: writes the correct Contents.json for the App Store icon asset catalog.
 // Icon PNG files at all required sizes are committed to git.

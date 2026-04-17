@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Gift, Ticket, ChevronLeft } from 'lucide-react-native';
-import { TouchableOpacity } from 'react-native';
+import { Gift, Ticket } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { ScreenWrapper, GradientCard } from '@/components/ui';
+import { CompactHeader, ScreenWrapper, GradientCard } from '@/components/ui';
 import { authService, KonkursInfo } from '@/api';
 import { useT } from '@/i18n';
 
@@ -60,17 +59,8 @@ export function KonkursScreen({ onBack, hideHeader }: KonkursScreenProps) {
       }
     >
       <View style={{ paddingHorizontal: theme.screenPadding.horizontal }}>
-        {/* Header */}
         {!hideHeader && (
-          <View style={styles.header}>
-            <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-              <ChevronLeft size={24} color={theme.colors.foreground} />
-            </TouchableOpacity>
-            <Text style={[styles.title, { fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes['2xl'], color: theme.colors.foreground }]}>
-              {t.konkurs.title}
-            </Text>
-            <View style={{ width: 40 }} />
-          </View>
+          <CompactHeader onBack={onBack} title={t.konkurs.title} titleAlign="center" paddingBottom={theme.spacing[2]} right={<View style={{ width: 40 }} />} />
         )}
 
         <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, marginBottom: theme.spacing[6] }}>
@@ -110,7 +100,7 @@ export function KonkursScreen({ onBack, hideHeader }: KonkursScreenProps) {
               <Text style={[styles.codeLabel, { fontFamily: theme.fonts.medium, color: 'rgba(255,255,255,0.7)' }]}>
                 {t.konkurs.yourCode}
               </Text>
-              <Text style={[styles.codeText, { fontFamily: theme.fonts.displayBold, color: '#fff', letterSpacing: 12 }]}>
+              <Text style={[styles.codeText, { fontFamily: theme.fonts.displayBold, color: '#fff', letterSpacing: 6 }]}>
                 {info.code}
               </Text>
             </LinearGradient>
@@ -121,15 +111,15 @@ export function KonkursScreen({ onBack, hideHeader }: KonkursScreenProps) {
             </Text>
           </View>
         ) : (
-          <GradientCard style={{ alignItems: 'center', paddingVertical: theme.spacing[10] }}>
-            <Gift size={48} color={theme.colors.mutedForeground} />
-            <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.lg, color: theme.colors.foreground, marginTop: theme.spacing[4], marginBottom: theme.spacing[2] }}>
+          <View style={{ alignItems: 'center', paddingVertical: theme.spacing[12] }}>
+            <Gift size={48} color={theme.colors.mutedForeground} style={{ opacity: 0.3, marginBottom: 12 }} />
+            <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.lg, color: theme.colors.foreground, marginBottom: theme.spacing[2] }}>
               {t.konkurs.noCode}
             </Text>
             <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, textAlign: 'center', lineHeight: 20 }}>
               {t.konkurs.noCodeDesc}
             </Text>
-          </GradientCard>
+          </View>
         )}
       </View>
     </ScreenWrapper>
@@ -137,19 +127,6 @@ export function KonkursScreen({ onBack, hideHeader }: KonkursScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    paddingTop: 8,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-  },
-  title: {},
   centered: {
     alignItems: 'center',
     paddingTop: 80,

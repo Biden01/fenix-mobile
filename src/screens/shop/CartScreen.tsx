@@ -7,11 +7,11 @@ import {
   FlatList,
   Alert,
 } from 'react-native';
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react-native';
+import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
-import { GradientCard, GoldButton } from '@/components/ui';
+import { CompactHeader, GradientCard, GoldButton } from '@/components/ui';
 import { useCartStore } from '@/store';
 import { shopService } from '@/api';
 import { useAuthStore } from '@/store';
@@ -27,6 +27,7 @@ interface CartScreenProps {
 export function CartScreen({ onBack, onSuccess, hideHeader, isModal }: CartScreenProps) {
   const theme = useTheme();
   const t = useT();
+  const insets = useSafeAreaInsets();
   const { items, removeItem, updateQuantity, clearCart, getTotalPrice, getTotalQV } = useCartStore();
   const { refreshProfile } = useAuthStore();
   const [loading, setLoading] = useState(false);
@@ -154,42 +155,21 @@ export function CartScreen({ onBack, onSuccess, hideHeader, isModal }: CartScree
           </TouchableOpacity>
         </View>
       ) : !hideHeader ? (
-        <View
-          style={[
-            styles.header,
-            {
-              paddingTop: 60,
-              paddingHorizontal: theme.screenPadding.horizontal,
-              paddingBottom: theme.spacing[4],
-            },
-          ]}
-        >
-          <TouchableOpacity
-            onPress={onBack}
-            style={[styles.backButton, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.full, padding: theme.spacing[2] }]}
-          >
-            <ArrowLeft size={24} color={theme.colors.foreground} />
-          </TouchableOpacity>
-          <Text
-            style={{
-              fontFamily: theme.fonts.displayBold,
-              fontSize: theme.fontSizes.xl,
-              color: theme.colors.foreground,
-              flex: 1,
-              textAlign: 'center',
-            }}
-          >
-            {t.shop.cart}
-          </Text>
-          {items.length > 0 && (
+        <CompactHeader
+          onBack={onBack}
+          title={t.shop.cart}
+          titleAlign="center"
+          paddingBottom={theme.spacing[4]}
+          right={items.length > 0 ? (
             <TouchableOpacity onPress={clearCart} style={{ padding: theme.spacing[2] }}>
               <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: theme.semantic.error }}>
                 {t.shop.clearCart}
               </Text>
             </TouchableOpacity>
+          ) : (
+            <View style={{ width: 40 }} />
           )}
-          {items.length === 0 && <View style={{ width: 40 }} />}
-        </View>
+        />
       ) : null}
 
       {items.length === 0 ? (
@@ -226,24 +206,13 @@ export function CartScreen({ onBack, onSuccess, hideHeader, isModal }: CartScree
             keyExtractor={(item) => item.id}
             contentContainerStyle={{
               paddingHorizontal: theme.screenPadding.horizontal,
-              paddingBottom: 160,
+              paddingBottom: theme.dimensions.tabBarHeight + insets.bottom + 104,
             }}
             showsVerticalScrollIndicator={false}
           />
 
           {/* Footer — positioned above the floating tab bar */}
-          <View
-            style={[
-              styles.footer,
-              {
-                backgroundColor: theme.colors.card,
-                borderTopColor: theme.colors.border,
-                paddingHorizontal: theme.screenPadding.horizontal,
-                paddingBottom: theme.dimensions.tabBarHeight + theme.spacing[4],
-                paddingTop: theme.spacing[4],
-              },
-            ]}
-          >
+          <View style={[styles.footer, { borderTopColor: theme.colors.border, paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: theme.dimensions.tabBarHeight + Math.max(insets.bottom, theme.spacing[4]), paddingTop: theme.spacing[4], backgroundColor: theme.colors.background }]}>
             <View style={styles.totalRow}>
               <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground }}>
                 {t.shop.total} ({items.length} {t.shop.itemsCount})
@@ -276,14 +245,12 @@ export function CartScreen({ onBack, onSuccess, hideHeader, isModal }: CartScree
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center' },
-  backButton: {},
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
   itemRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   controls: { alignItems: 'flex-end', gap: 8 },
   trashBtn: { padding: 8 },
   qtyRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 },
-  qtyBtn: { padding: 8 },
+  qtyBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   footer: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopWidth: 1 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
 });

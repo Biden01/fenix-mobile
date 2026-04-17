@@ -65,7 +65,7 @@ export function GoldButton({
     <>
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? '#1A1000' : theme.colors.goldForeground}
+          color={variant === 'primary' ? '#000000' : theme.colors.goldForeground}
           size="small"
         />
       ) : (
@@ -79,7 +79,7 @@ export function GoldButton({
                 fontSize: getFontSize(),
                 color:
                   variant === 'primary'
-                    ? '#1A1000'  // dark on gold gradient — readable in both themes
+                    ? '#000000'
                     : variant === 'secondary'
                     ? theme.colors.foreground
                     : theme.colors.goldForeground,

@@ -1,13 +1,6 @@
 import { Stack } from 'expo-router';
 import { Platform } from 'react-native';
 
-const iosHeader = {
-  headerShown: Platform.OS === 'ios',
-  title: '',
-  headerTintColor: '#FFD700',
-  headerTransparent: true,
-} as const;
-
 export default function HomeLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -19,10 +12,10 @@ export default function HomeLayout() {
           presentation: Platform.OS === 'ios' ? 'modal' : 'card',
         }}
       />
-      <Stack.Screen name="team" options={iosHeader} />
-      <Stack.Screen name="rank" options={iosHeader} />
-      <Stack.Screen name="statistics" options={iosHeader} />
-      <Stack.Screen name="konkurs" options={iosHeader} />
+      <Stack.Screen name="team" />
+      <Stack.Screen name="rank" />
+      <Stack.Screen name="statistics" />
+      <Stack.Screen name="konkurs" />
     </Stack>
   );
 }

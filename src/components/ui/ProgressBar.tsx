@@ -27,13 +27,13 @@ export function ProgressBar({
   const getColors = (): [string, string] => {
     switch (variant) {
       case 'success':
-        return [theme.semantic.success, '#059669'];
+        return [theme.semantic.success, theme.semantic.success];
       case 'info':
-        return [theme.semantic.info, '#2563EB'];
+        return [theme.semantic.info, theme.semantic.info];
       case 'warning':
-        return [theme.semantic.warning, '#D97706'];
+        return [theme.semantic.warning, theme.semantic.warning];
       case 'purple':
-        return ['#A855F7', '#7C3AED'];
+        return ['#A855F7', '#7C3AED']; // brand color — intentionally hardcoded
       default:
         return [theme.gold.primary, theme.gold.dark];
     }

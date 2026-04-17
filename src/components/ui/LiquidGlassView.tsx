@@ -1,5 +1,6 @@
 import React from 'react';
 import { Platform, StyleSheet, View, ViewStyle } from 'react-native';
+import { useTheme } from '@/theme';
 import { NativeLiquidGlassView } from '../../../modules/liquid-glass-tabbar';
 
 interface LiquidGlassViewProps {
@@ -17,6 +18,8 @@ export function LiquidGlassView({
   tint = '#ffffff',
   interactive = false,
 }: LiquidGlassViewProps) {
+  const theme = useTheme();
+
   if (Platform.OS === 'ios' && NativeLiquidGlassView) {
     const NativeView = NativeLiquidGlassView as React.ComponentType<any>;
     return (
@@ -32,5 +35,21 @@ export function LiquidGlassView({
     );
   }
 
-  return <View style={style}>{children}</View>;
+  return (
+    <View
+      style={[
+        {
+          overflow: 'hidden',
+          borderRadius: cornerRadius,
+          backgroundColor: theme.isDark ? 'rgba(15,15,24,0.84)' : 'rgba(255,255,255,0.9)',
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: theme.colors.border,
+        },
+        style,
+      ]}
+      pointerEvents={interactive ? 'auto' : 'box-none'}
+    >
+      {children}
+    </View>
+  );
 }

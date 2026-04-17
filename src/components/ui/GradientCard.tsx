@@ -41,13 +41,13 @@ export function GradientCard({
           ]}
         >
           <LinearGradient
-            colors={['rgba(255, 215, 0, 0.15)', 'rgba(218, 165, 32, 0.05)']}
+            colors={[`${theme.gold.primary}26`, `${theme.gold.primary}0D`]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{
               padding: getPadding(),
               borderWidth: noBorder ? 0 : 1,
-              borderColor: 'rgba(255, 215, 0, 0.3)',
+              borderColor: `${theme.gold.primary}4D`,
               borderRadius: theme.borderRadius['2xl'],
             }}
           >
@@ -85,14 +85,14 @@ export function GradientCard({
       <View
         style={[
           {
-            backgroundColor: theme.isDark ? 'rgba(15, 15, 24, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            backgroundColor: theme.isDark ? 'rgba(15, 15, 24, 0.7)' : 'rgba(255, 255, 255, 0.85)',
             borderRadius: theme.borderRadius['2xl'],
             padding: getPadding(),
             borderWidth: noBorder ? 0 : StyleSheet.hairlineWidth,
-            borderColor: 'rgba(255,255,255,0.15)',
+            borderColor: theme.colors.border,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.12,
+            shadowOpacity: theme.isDark ? 0.3 : 0.08,
             shadowRadius: 24,
             elevation: 8,
           },
@@ -112,10 +112,10 @@ export function GradientCard({
           borderRadius: theme.borderRadius['2xl'],
           padding: getPadding(),
           borderWidth: noBorder ? 0 : StyleSheet.hairlineWidth,
-          borderColor: 'rgba(255,255,255,0.1)',
+          borderColor: theme.colors.border,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.12,
+          shadowOpacity: theme.isDark ? 0.25 : 0.06,
           shadowRadius: 20,
           elevation: 6,
         },

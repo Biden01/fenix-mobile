@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import * as SecureStore from 'expo-secure-store';
 import { authService, apiClient, UserProfile } from '../api';
 import { ENDPOINTS } from '../api/config';
+import { unregisterPushToken } from '@/services/pushService';
 
 // Custom storage for Expo SecureStore
 const secureStorage = {
@@ -127,8 +128,8 @@ const mapProfileToUser = (profile: UserProfile): User => ({
   leftSum: parseFloat(profile.leftsum) || 0,
   rightSum: parseFloat(profile.rightsum) || 0,
   totalSum: parseFloat(profile.totalsum) || 0,
-  leftLegLink: `https://fenixapp.kz/ref/${profile.user_id}/left`,
-  rightLegLink: `https://fenixapp.kz/ref/${profile.user_id}/right`,
+  leftLegLink: `https://fenixinternationalcompany.kz/register?sponsor=${profile.user_id}&leg=1`,
+  rightLegLink: `https://fenixinternationalcompany.kz/register?sponsor=${profile.user_id}&leg=2`,
   registeredAt: profile.reg_time,
   paidTime: profile.paid_time,
   planExpire: profile.plan_expire,
@@ -223,6 +224,14 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        const authToken = get().token;
+        void unregisterPushToken(authToken).catch((error) => {
+          console.warn(
+            '[Push] Failed to unregister Expo push token during logout:',
+            error instanceof Error ? error.message : error
+          );
+        });
+
         apiClient.setToken(null);
         set({
           user: null,

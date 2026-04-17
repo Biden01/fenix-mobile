@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert, Share, Linking, Modal, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert, Share, Linking, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as LocalAuthentication from 'expo-local-authentication';
 import {
-  User,
   Phone,
   Mail,
   Link,
@@ -25,10 +24,12 @@ import {
   ScrollText,
   KeyRound,
   X,
+  Share2,
+  AlertTriangle,
 } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useTheme } from '@/theme';
-import { ScreenWrapper, GradientCard, GlassCard, Avatar, RankBadge, GoldButton, GlassButton } from '@/components/ui';
+import { ScreenWrapper, GradientCard, GlassCard, Avatar, RankBadge, GoldButton, SectionHeader } from '@/components/ui';
 import { useAuthStore, useThemeStore, useLanguageStore } from '@/store';
 import { useLockStore } from '@/store/lockStore';
 import { MEDIA_BASE_URL } from '@/api/config';
@@ -53,6 +54,9 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
   const [showSetupPin, setShowSetupPin] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [hasBiometric, setHasBiometric] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -75,96 +79,42 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
   const handleShareLink = async (link: string, isLeft: boolean) => {
     try {
-      await Share.share({
-        message: `${isLeft ? t.profile.shareLeft : t.profile.shareRight} ${link}`,
-      });
-    } catch (error) {
-      console.error('Share error:', error);
-    }
+      await Share.share({ message: `${isLeft ? t.profile.shareLeft : t.profile.shareRight} ${link}` });
+    } catch {}
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      t.auth.logoutConfirmTitle,
-      t.auth.logoutConfirmMsg,
-      [
-        { text: t.common.cancel, style: 'cancel' },
-        {
-          text: t.auth.logout,
-          style: 'destructive',
-          onPress: onLogout,
-        },
-      ]
-    );
+    Alert.alert(t.auth.logoutConfirmTitle, t.auth.logoutConfirmMsg, [
+      { text: t.common.cancel, style: 'cancel' },
+      { text: t.auth.logout, style: 'destructive', onPress: onLogout },
+    ]);
   };
 
   const handleLanguagePress = () => {
-    Alert.alert(
-      t.profile.selectLanguage,
-      undefined,
-      [
-        {
-          text: t.profile.langRu,
-          onPress: () => setLanguage('ru' as Language),
-          style: language === 'ru' ? 'default' : 'default',
-        },
-        {
-          text: t.profile.langKz,
-          onPress: () => setLanguage('kz' as Language),
-        },
-        { text: t.common.cancel, style: 'cancel' },
-      ]
-    );
+    Alert.alert(t.profile.selectLanguage, undefined, [
+      { text: t.profile.langRu, onPress: () => setLanguage('ru' as Language) },
+      { text: t.profile.langKz, onPress: () => setLanguage('kz' as Language) },
+      { text: t.common.cancel, style: 'cancel' },
+    ]);
   };
 
   const handlePinPress = () => {
     if (isPinSet) {
-      Alert.alert(
-        t.profile.pinTitle,
-        t.profile.pinWhat,
-        [
-          { text: t.common.cancel, style: 'cancel' },
-          { text: t.profile.pinChange, onPress: () => setShowSetupPin(true) },
-          {
-            text: t.profile.pinRemove,
-            style: 'destructive',
-            onPress: () =>
-              Alert.alert(t.profile.pinRemoveConfirm, t.profile.pinRemoveMsg, [
-                { text: t.common.cancel, style: 'cancel' },
-                { text: t.profile.pinRemove, style: 'destructive', onPress: removePin },
-              ]),
-          },
-        ]
-      );
+      Alert.alert(t.profile.pinTitle, t.profile.pinWhat, [
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.profile.pinChange, onPress: () => setShowSetupPin(true) },
+        {
+          text: t.profile.pinRemove,
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert(t.profile.pinRemoveConfirm, t.profile.pinRemoveMsg, [
+              { text: t.common.cancel, style: 'cancel' },
+              { text: t.profile.pinRemove, style: 'destructive', onPress: removePin },
+            ]),
+        },
+      ]);
     } else {
       setShowSetupPin(true);
-    }
-  };
-
-  const handleHelpPress = () => {
-    Alert.alert(t.profile.help, t.profile.helpMsg, [{ text: t.common.ok }]);
-  };
-
-  const handleChangePasswordSubmit = async () => {
-    if (newPassword.length < 4) {
-      Alert.alert(t.common.error, t.profile.changePasswordShort);
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      Alert.alert(t.common.error, t.profile.changePasswordMismatch);
-      return;
-    }
-    setChangingPassword(true);
-    const result = await authService.changePassword(oldPassword, newPassword);
-    setChangingPassword(false);
-    if ('error' in result) {
-      Alert.alert(t.common.error, result.error);
-    } else {
-      Alert.alert(t.common.success, t.profile.changePasswordSuccess);
-      setShowChangePassword(false);
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
     }
   };
 
@@ -176,582 +126,433 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
   ];
 
   const handleCountryPress = () => {
-    Alert.alert(
-      t.auth.country,
-      t.auth.selectCountry,
-      [
-        ...COUNTRIES.map(c => ({
-          text: `${c.label} (${c.currency})`,
-          onPress: async () => {
-            const res = await apiClient.put<{ country: string }>('/users/me', { country: c.code });
-            if (!res.error) {
-              useAuthStore.getState().updateUser({ country: c.code });
-            }
-          },
-        })),
-        { text: t.common.cancel, style: 'cancel' as const },
-      ]
-    );
+    Alert.alert(t.auth.country, t.auth.selectCountry, [
+      ...COUNTRIES.map(c => ({
+        text: `${c.label} (${c.currency})`,
+        onPress: async () => {
+          const res = await apiClient.put<{ country: string }>('/users/me', { country: c.code });
+          if (!res.error) useAuthStore.getState().updateUser({ country: c.code });
+        },
+      })),
+      { text: t.common.cancel, style: 'cancel' as const },
+    ]);
   };
 
-  const handlePrivacyPolicy = () => {
-    Linking.openURL('https://fenixinternationalcompany.kz/privacy');
-  };
-
-  const handleTerms = () => {
-    Linking.openURL('https://fenixinternationalcompany.kz/terms');
+  const handleChangePasswordSubmit = async () => {
+    if (newPassword.length < 4) { Alert.alert(t.common.error, t.profile.changePasswordShort); return; }
+    if (newPassword !== confirmPassword) { Alert.alert(t.common.error, t.profile.changePasswordMismatch); return; }
+    setChangingPassword(true);
+    const result = await authService.changePassword(oldPassword, newPassword);
+    setChangingPassword(false);
+    if ('error' in result) {
+      Alert.alert(t.common.error, result.error);
+    } else {
+      Alert.alert(t.common.success, t.profile.changePasswordSuccess);
+      setShowChangePassword(false);
+      setOldPassword(''); setNewPassword(''); setConfirmPassword('');
+    }
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      t.profile.deleteAccount,
-      t.profile.deleteAccountMsg,
-      [
-        { text: t.common.cancel, style: 'cancel' },
-        {
-          text: t.common.delete,
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              t.profile.deleteAccountConfirm,
-              t.profile.deleteAccountFinal,
-              [
-                { text: t.common.cancel, style: 'cancel' },
-                {
-                  text: t.profile.deleteAccountYes,
-                  style: 'destructive',
-                  onPress: async () => {
-                    const success = await deleteAccount();
-                    if (!success) {
-                      Alert.alert(t.common.error, t.profile.deleteAccountError);
-                    }
-                  },
-                },
-              ]
-            );
-          },
-        },
-      ]
-    );
+    setDeleteConfirmText('');
+    setShowDeleteModal(true);
   };
 
-  const MenuItem = ({
-    icon: Icon,
-    label,
-    value,
-    onPress,
-    rightElement,
-    danger,
-  }: {
-    icon: any;
-    label: string;
-    value?: string;
-    onPress?: () => void;
-    rightElement?: React.ReactNode;
-    danger?: boolean;
-  }) => (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={!onPress && !rightElement}
-      style={[
-        styles.menuItem,
-        {
-          paddingVertical: theme.spacing[4],
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: 'rgba(255,255,255,0.08)',
-        },
-      ]}
-    >
-      <GlassCard
-        cornerRadius={theme.borderRadius.lg}
-        tint={danger ? theme.semantic.error : '#ffffff'}
-        style={[
-          styles.menuIcon,
-          {
-            padding: theme.spacing[2],
-            backgroundColor: danger ? `${theme.semantic.error}15` : 'transparent',
-          },
-        ]}
-      >
-        <Icon size={20} color={danger ? theme.semantic.error : theme.colors.mutedForeground} />
-      </GlassCard>
-      <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
-        <Text
-          style={[
-            {
-              fontFamily: theme.fonts.medium,
-              fontSize: theme.fontSizes.sm,
-              color: danger ? theme.semantic.error : theme.colors.foreground,
-            },
-          ]}
-        >
-          {label}
-        </Text>
-        {value && (
-          <Text
-            style={[
-              {
-                fontFamily: theme.fonts.regular,
-                fontSize: theme.fontSizes.xs,
-                color: theme.colors.mutedForeground,
-                marginTop: 2,
-              },
-            ]}
-          >
-            {value}
-          </Text>
-        )}
-      </View>
-      {rightElement || (onPress && <ChevronRight size={20} color={theme.colors.mutedForeground} />)}
-    </TouchableOpacity>
-  );
+  const handleConfirmDelete = async () => {
+    setDeleteLoading(true);
+    const success = await deleteAccount();
+    setDeleteLoading(false);
+    if (!success) {
+      Alert.alert(t.common.error, t.profile.deleteAccountError);
+    }
+    setShowDeleteModal(false);
+  };
+
+  // Verification status
+  const verificationStatus = user.verified === 1
+    ? { label: t.verification.statusApproved, color: theme.semantic.success, icon: ShieldCheck }
+    : user.verified === 2
+    ? { label: t.verification.statusRejected, color: theme.semantic.error, icon: ShieldX }
+    : user.status
+    ? { label: t.verification.statusPending ?? 'На проверке', color: theme.semantic.warning, icon: Clock }
+    : { label: t.verification.statusUnverified, color: theme.semantic.warning, icon: Shield };
+
+  const VerifIcon = verificationStatus.icon;
 
   return (
     <>
-    <ScreenWrapper scrollable padded={false}>
-      <View style={{ paddingHorizontal: theme.screenPadding.horizontal }}>
-        <Text
-          style={[
-            {
-              fontFamily: theme.fonts.displayBold,
-              fontSize: theme.fontSizes['2xl'],
-              color: theme.colors.foreground,
-              marginBottom: theme.spacing[4],
-            },
-          ]}
-        >
-          {t.profile.title}
-        </Text>
+      <ScreenWrapper scrollable padded={false}>
+        <View style={{ paddingHorizontal: theme.screenPadding.horizontal }}>
 
-        {/* Profile Card */}
-        <GradientCard variant="gold" style={{ marginBottom: theme.spacing[6] }}>
-          <View style={styles.profileHeader}>
-            <Avatar name={user.name} source={user.avatar ? `${MEDIA_BASE_URL}${user.avatar}` : undefined} size="xl" />
-            <View style={styles.profileInfo}>
-              <Text
-                style={[
-                  {
-                    fontFamily: theme.fonts.bold,
-                    fontSize: theme.fontSizes.xl,
-                    color: theme.colors.foreground,
-                    marginBottom: theme.spacing[1],
-                  },
-                ]}
-              >
-                {user.name}
-              </Text>
-              <RankBadge rank={user.rank} size="md" showName />
-              <Text
-                style={[
-                  {
-                    fontFamily: theme.fonts.regular,
-                    fontSize: theme.fontSizes.xs,
-                    color: theme.colors.mutedForeground,
-                    marginTop: theme.spacing[2],
-                  },
-                ]}
-              >
-                ID: {user.id}
-              </Text>
-            </View>
-          </View>
-
-          <View style={[styles.profileDetails, { marginTop: theme.spacing[4] }]}>
-            <View style={styles.profileDetailRow}>
-              <Phone size={16} color={theme.colors.mutedForeground} />
-              <Text
-                style={[
-                  {
-                    fontFamily: theme.fonts.regular,
-                    fontSize: theme.fontSizes.sm,
-                    color: theme.colors.foreground,
-                    marginLeft: theme.spacing[2],
-                  },
-                ]}
-              >
-                {user.phone}
-              </Text>
-            </View>
-            <View style={[styles.profileDetailRow, { marginTop: theme.spacing[2] }]}>
-              <Mail size={16} color={theme.colors.mutedForeground} />
-              <Text
-                style={[
-                  {
-                    fontFamily: theme.fonts.regular,
-                    fontSize: theme.fontSizes.sm,
-                    color: theme.colors.foreground,
-                    marginLeft: theme.spacing[2],
-                  },
-                ]}
-              >
-                {user.email}
-              </Text>
-            </View>
-          </View>
-        </GradientCard>
-
-        {/* Referral Links */}
-        <GradientCard style={{ marginBottom: theme.spacing[6] }}>
-          <Text
-            style={[
-              {
-                fontFamily: theme.fonts.semibold,
-                fontSize: theme.fontSizes.md,
-                color: theme.colors.foreground,
-                marginBottom: theme.spacing[4],
-              },
-            ]}
-          >
-            {t.profile.referralLinks}
+          {/* ── Header ── */}
+          <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes['2xl'], color: theme.colors.foreground, marginBottom: theme.spacing[5], paddingTop: theme.spacing[2] }}>
+            {t.profile.title}
           </Text>
 
-          <View style={styles.linkCard}>
-            <View style={styles.linkHeader}>
-              <Link size={16} color={theme.colors.goldForeground} />
-              <Text
-                style={[
-                  {
-                    fontFamily: theme.fonts.medium,
-                    fontSize: theme.fontSizes.sm,
-                    color: theme.colors.foreground,
-                    marginLeft: theme.spacing[2],
-                  },
-                ]}
-              >
-                {t.profile.leftLeg}
-              </Text>
+          {/* ── Profile Hero Card ── */}
+          <GradientCard variant="gold" style={{ marginBottom: theme.spacing[4] }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: theme.spacing[4] }}>
+              <Avatar name={user.name} source={user.avatar ? `${MEDIA_BASE_URL}${user.avatar}` : undefined} size="xl" />
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.xl, color: theme.colors.foreground, marginBottom: 6 }}>
+                  {user.name}
+                </Text>
+                <RankBadge rank={user.rank} size="sm" showName />
+                <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 6 }}>
+                  ID: {user.id}
+                </Text>
+              </View>
             </View>
-            <View style={styles.linkActions}>
-              <TouchableOpacity
-                onPress={() => handleCopyLink(user.leftLegLink, true)}
-                style={[
-                  styles.linkButton,
-                  {
-                    backgroundColor: theme.colors.muted,
-                    borderRadius: theme.borderRadius.lg,
-                    padding: theme.spacing[2],
-                  },
-                ]}
-              >
-                <Copy size={18} color={theme.colors.foreground} />
-              </TouchableOpacity>
-              <GlassButton
-                label={t.profile.share}
-                icon="square.and.arrow.up"
-                tint="#FFD700"
-                onPress={() => handleShareLink(user.leftLegLink, true)}
-                style={{ marginLeft: theme.spacing[2] }}
-              />
-            </View>
-          </View>
 
-          <View style={[styles.linkCard, { marginTop: theme.spacing[3] }]}>
-            <View style={styles.linkHeader}>
-              <Link size={16} color={theme.colors.goldForeground} />
-              <Text
-                style={[
-                  {
-                    fontFamily: theme.fonts.medium,
-                    fontSize: theme.fontSizes.sm,
-                    color: theme.colors.foreground,
-                    marginLeft: theme.spacing[2],
-                  },
-                ]}
-              >
-                {t.profile.rightLeg}
-              </Text>
-            </View>
-            <View style={styles.linkActions}>
-              <TouchableOpacity
-                onPress={() => handleCopyLink(user.rightLegLink, false)}
-                style={[
-                  styles.linkButton,
-                  {
-                    backgroundColor: theme.colors.muted,
-                    borderRadius: theme.borderRadius.lg,
-                    padding: theme.spacing[2],
-                  },
-                ]}
-              >
-                <Copy size={18} color={theme.colors.foreground} />
-              </TouchableOpacity>
-              <GlassButton
-                label={t.profile.share}
-                icon="square.and.arrow.up"
-                tint="#FFD700"
-                onPress={() => handleShareLink(user.rightLegLink, false)}
-                style={{ marginLeft: theme.spacing[2] }}
-              />
-            </View>
-          </View>
-        </GradientCard>
-
-        {/* Верификация */}
-        <GradientCard style={{ marginBottom: theme.spacing[4] }} padding={0}>
-          <View style={{ paddingHorizontal: theme.spacing[4] }}>
-            <MenuItem
-              icon={
-                user.verified === 1 ? ShieldCheck
-                : user.verified === 2 ? ShieldX
-                : user.verified === 0 && user.status ? Clock
-                : Shield
-              }
-              label={t.verification.title}
-              value={
-                user.verified === 1 ? t.verification.statusApproved
-                : user.verified === 2 ? t.verification.statusRejected
-                : t.verification.statusUnverified
-              }
-              onPress={() => setShowVerification(true)}
-              rightElement={
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <View style={{
-                    width: 8, height: 8, borderRadius: 4,
-                    backgroundColor: user.verified === 1 ? theme.semantic.success
-                      : user.verified === 2 ? theme.semantic.error
-                      : theme.semantic.warning,
-                  }} />
-                  <ChevronRight size={20} color={theme.colors.mutedForeground} />
+            <View style={{ gap: 8 }}>
+              {user.phone ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Phone size={14} color={theme.colors.mutedForeground} />
+                  <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>{user.phone}</Text>
                 </View>
-              }
-            />
-          </View>
-        </GradientCard>
+              ) : null}
+              {user.email ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Mail size={14} color={theme.colors.mutedForeground} />
+                  <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>{user.email}</Text>
+                </View>
+              ) : null}
+            </View>
+          </GradientCard>
 
-        {/* Settings */}
-        <GradientCard style={{ marginBottom: theme.spacing[6] }} padding={0}>
-          <View style={{ paddingHorizontal: theme.spacing[4], paddingTop: theme.spacing[4] }}>
-            <Text
-              style={[
-                {
-                  fontFamily: theme.fonts.semibold,
-                  fontSize: theme.fontSizes.md,
-                  color: theme.colors.foreground,
-                  marginBottom: theme.spacing[2],
-                },
-              ]}
-            >
-              {t.profile.settings}
-            </Text>
+          {/* ── Verification Banner (if not verified) ── */}
+          {user.verified !== 1 && (
+            <TouchableOpacity onPress={() => setShowVerification(true)} activeOpacity={0.85} style={{ marginBottom: theme.spacing[4] }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: `${verificationStatus.color}12`, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: `${verificationStatus.color}30` }}>
+                <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${verificationStatus.color}20`, alignItems: 'center', justifyContent: 'center' }}>
+                  <VerifIcon size={18} color={verificationStatus.color} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>{t.verification.title}</Text>
+                  <Text style={{ fontFamily: theme.fonts.regular, fontSize: 11, color: verificationStatus.color, marginTop: 2 }}>{verificationStatus.label}</Text>
+                </View>
+                <ChevronRight size={18} color={theme.colors.mutedForeground} />
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {/* ── Referral Links ── */}
+          <View style={{ marginBottom: theme.spacing[4] }}>
+            <SectionHeader title={t.profile.referralLinks} />
+            <GradientCard padding={0}>
+              {[
+                { label: t.profile.leftLeg, link: user.leftLegLink, isLeft: true },
+                { label: t.profile.rightLeg, link: user.rightLegLink, isLeft: false },
+              ].map(({ label, link, isLeft }, i) => (
+                <View key={label}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14 }}>
+                    <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: `${theme.gold.primary}18`, alignItems: 'center', justifyContent: 'center' }}>
+                      <Link size={15} color={theme.colors.goldForeground} />
+                    </View>
+                    <Text style={{ flex: 1, fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: theme.colors.foreground, marginLeft: 12 }}>{label}</Text>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <TouchableOpacity onPress={() => handleCopyLink(link, isLeft)} style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: theme.colors.muted, alignItems: 'center', justifyContent: 'center' }}>
+                        <Copy size={16} color={theme.colors.foreground} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleShareLink(link, isLeft)} style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${theme.gold.primary}18`, alignItems: 'center', justifyContent: 'center' }}>
+                        <Share2 size={16} color={theme.colors.goldForeground} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  {i === 0 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 58 }} />}
+                </View>
+              ))}
+            </GradientCard>
           </View>
 
-          <View style={{ paddingHorizontal: theme.spacing[4] }}>
-            <MenuItem
-              icon={Moon}
-              label={t.profile.darkTheme}
-              rightElement={
-                <Switch
-                  value={colorScheme === 'dark'}
-                  onValueChange={toggleColorScheme}
-                  trackColor={{
-                    false: theme.colors.muted,
-                    true: theme.gold.primary,
-                  }}
+          {/* ── Security ── */}
+          <View style={{ marginBottom: theme.spacing[4] }}>
+            <SectionHeader title={t.profile.security ?? 'Безопасность'} />
+            <GradientCard padding={0}>
+              <MenuItem icon={Lock} label={isPinSet ? t.profile.pinEnabled : t.profile.pinSet} onPress={handlePinPress} theme={theme} />
+              <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 58 }} />
+              <MenuItem icon={KeyRound} label={t.profile.changePassword} onPress={() => setShowChangePassword(true)} theme={theme} />
+              {isPinSet && hasBiometric && (
+                <>
+                  <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 58 }} />
+                  <MenuItem
+                    icon={Fingerprint}
+                    label={t.profile.biometric}
+                    theme={theme}
+                    rightElement={
+                      <Switch value={biometricEnabled} onValueChange={setBiometricEnabled}
+                        trackColor={{ false: theme.colors.muted, true: `${theme.gold.primary}60` }}
+                        thumbColor={biometricEnabled ? theme.colors.goldForeground : theme.colors.mutedForeground}
+                      />
+                    }
+                  />
+                </>
+              )}
+              {user.verified !== 1 && (
+                <>
+                  <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 58 }} />
+                  <MenuItem icon={VerifIcon} label={t.verification.title} value={verificationStatus.label} onPress={() => setShowVerification(true)} theme={theme} />
+                </>
+              )}
+            </GradientCard>
+          </View>
+
+          {/* ── Settings ── */}
+          <View style={{ marginBottom: theme.spacing[4] }}>
+            <SectionHeader title={t.profile.settings} />
+            <GradientCard padding={0}>
+              <MenuItem icon={Moon} label={t.profile.darkTheme} theme={theme} rightElement={
+                <Switch value={colorScheme === 'dark'} onValueChange={toggleColorScheme}
+                  trackColor={{ false: theme.colors.muted, true: theme.gold.primary }}
                   thumbColor="#FFF"
                 />
-              }
-            />
-            <MenuItem
-              icon={Bell}
-              label={t.profile.notifications}
-              value={t.profile.notificationsEnabled}
-            />
-            <MenuItem
-              icon={Globe}
-              label={t.profile.language}
-              value={t.profile.currentLang}
-              onPress={handleLanguagePress}
-            />
-            <MenuItem
-              icon={Globe}
-              label={t.auth.country}
-              value={COUNTRIES.find(c => c.code === (user.country || 'KZ'))?.label || 'Казахстан 🇰🇿'}
-              onPress={handleCountryPress}
-            />
-            <MenuItem
-              icon={Lock}
-              label={isPinSet ? t.profile.pinEnabled : t.profile.pinSet}
-              onPress={handlePinPress}
-            />
-            <MenuItem
-              icon={KeyRound}
-              label={t.profile.changePassword}
-              onPress={() => setShowChangePassword(true)}
-            />
-            {isPinSet && hasBiometric && (
-              <MenuItem
-                icon={Fingerprint}
-                label={t.profile.biometric}
-                rightElement={
-                  <Switch
-                    value={biometricEnabled}
-                    onValueChange={setBiometricEnabled}
-                    trackColor={{ false: theme.colors.muted, true: `${theme.gold.primary}60` }}
-                    thumbColor={biometricEnabled ? theme.colors.goldForeground : theme.colors.mutedForeground}
-                  />
-                }
+              } />
+              <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 58 }} />
+              <MenuItem icon={Globe} label={t.profile.language} value={t.profile.currentLang} onPress={handleLanguagePress} theme={theme} />
+              <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 58 }} />
+              <MenuItem icon={Globe} label={t.auth.country} value={COUNTRIES.find(c => c.code === (user.country || 'KZ'))?.label || 'Казахстан 🇰🇿'} onPress={handleCountryPress} theme={theme} />
+              <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 58 }} />
+              <MenuItem icon={Bell} label={t.profile.notifications} value={t.profile.notificationsEnabled} theme={theme} />
+            </GradientCard>
+          </View>
+
+          {/* ── Info ── */}
+          <View style={{ marginBottom: theme.spacing[4] }}>
+            <SectionHeader title={t.profile.information ?? 'Информация'} />
+            <GradientCard padding={0}>
+              <MenuItem icon={HelpCircle} label={t.profile.help} onPress={() => Alert.alert(t.profile.help, t.profile.helpMsg, [{ text: t.common.ok }])} theme={theme} />
+              <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 58 }} />
+              <MenuItem icon={FileText} label={t.profile.privacy} onPress={() => Linking.openURL('https://fenixinternationalcompany.kz/privacy')} theme={theme} />
+              <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 58 }} />
+              <MenuItem icon={ScrollText} label={t.profile.terms} onPress={() => Linking.openURL('https://fenixinternationalcompany.kz/terms')} theme={theme} />
+            </GradientCard>
+          </View>
+
+          {/* ── Logout ── */}
+          <View style={{ marginBottom: theme.spacing[4] }}>
+            <GradientCard padding={0}>
+              <MenuItem icon={LogOut} label={t.profile.logout} onPress={handleLogout} danger theme={theme} />
+            </GradientCard>
+          </View>
+
+          {/* ── Delete Account — Danger Zone ── */}
+          <View style={{ marginBottom: theme.spacing[4] }}>
+            <SectionHeader title={t.profile.deleteAccountDangerTitle} badgeColor={theme.semantic.error} />
+            <View style={{
+              borderRadius: theme.borderRadius['2xl'],
+              borderWidth: 1,
+              borderColor: `${theme.semantic.error}35`,
+              backgroundColor: `${theme.semantic.error}08`,
+              padding: theme.spacing[4],
+            }}>
+              <View style={{ flexDirection: 'row', gap: theme.spacing[3], marginBottom: theme.spacing[4] }}>
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: `${theme.semantic.error}15`, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <AlertTriangle size={22} color={theme.semantic.error} />
+                </View>
+                <Text style={{ flex: 1, fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, lineHeight: 20 }}>
+                  {t.profile.deleteAccountWarning}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleDeleteAccount}
+                activeOpacity={0.7}
+                style={{
+                  borderWidth: 1,
+                  borderColor: `${theme.semantic.error}60`,
+                  borderRadius: theme.borderRadius.xl,
+                  paddingVertical: theme.spacing[3],
+                  alignItems: 'center',
+                  backgroundColor: `${theme.semantic.error}10`,
+                }}
+              >
+                <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.semantic.error }}>
+                  {t.profile.deleteAccount}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Version */}
+          <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, textAlign: 'center', marginBottom: theme.spacing[8] }}>
+            Fenix International Company v{Constants.expoConfig?.version ?? '1.0.0'}
+          </Text>
+
+        </View>
+      </ScreenWrapper>
+
+      {/* Verification overlay */}
+      {showVerification && (
+        <View style={StyleSheet.absoluteFill}>
+          <VerificationScreen onBack={() => setShowVerification(false)} />
+        </View>
+      )}
+
+      {/* Change password modal */}
+      <Modal visible={showChangePassword} transparent animationType="fade" onRequestClose={() => setShowChangePassword(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <GlassCard cornerRadius={20} style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.foreground, fontFamily: theme.fonts.bold }]}>
+                {t.profile.changePassword}
+              </Text>
+              <TouchableOpacity onPress={() => setShowChangePassword(false)}>
+                <X size={22} color={theme.colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+            {([
+              { placeholder: t.profile.changePasswordOld, value: oldPassword, onChange: setOldPassword },
+              { placeholder: t.profile.changePasswordNew, value: newPassword, onChange: setNewPassword },
+              { placeholder: t.profile.changePasswordConfirm, value: confirmPassword, onChange: setConfirmPassword },
+            ] as const).map(({ placeholder, value, onChange }) => (
+              <TextInput key={placeholder}
+                style={[styles.modalInput, { backgroundColor: theme.colors.muted, color: theme.colors.foreground, borderColor: theme.colors.border }]}
+                placeholder={placeholder}
+                placeholderTextColor={theme.colors.mutedForeground}
+                secureTextEntry
+                value={value}
+                onChangeText={onChange as any}
               />
-            )}
-            <MenuItem
-              icon={HelpCircle}
-              label={t.profile.help}
-              onPress={handleHelpPress}
-            />
-            <MenuItem
-              icon={FileText}
-              label={t.profile.privacy}
-              onPress={handlePrivacyPolicy}
-            />
-            <MenuItem
-              icon={ScrollText}
-              label={t.profile.terms}
-              onPress={handleTerms}
-            />
+            ))}
+            <GoldButton title={changingPassword ? t.common.loading : t.common.save} onPress={handleChangePasswordSubmit} loading={changingPassword} style={{ marginTop: 8 }} />
+          </GlassCard>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Delete account confirmation modal */}
+      <Modal visible={showDeleteModal} transparent animationType="fade" onRequestClose={() => setShowDeleteModal(false)}>
+        <KeyboardAvoidingView style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={{ backgroundColor: theme.colors.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, gap: 16 }}>
+            {/* Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: `${theme.semantic.error}15`, alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle size={22} color={theme.semantic.error} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.lg, color: theme.semantic.error }}>
+                  {t.profile.deleteAccount}
+                </Text>
+                <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>
+                  {t.profile.deleteAccountDangerTitle}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowDeleteModal(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.muted, alignItems: 'center', justifyContent: 'center' }}>
+                <X size={16} color={theme.colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Warning */}
+            <View style={{ backgroundColor: `${theme.semantic.error}0C`, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: `${theme.semantic.error}25` }}>
+              <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, lineHeight: 20 }}>
+                {t.profile.deleteAccountWarning}
+              </Text>
+            </View>
+
+            {/* Confirm input */}
+            <View style={{ gap: 8 }}>
+              <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>
+                {t.profile.deleteAccountTypeConfirm}{' '}
+                <Text style={{ fontFamily: theme.fonts.bold, color: theme.semantic.error }}>{t.profile.deleteAccountConfirmWord}</Text>
+              </Text>
+              <TextInput
+                style={{
+                  height: 48,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: deleteConfirmText === t.profile.deleteAccountConfirmWord
+                    ? `${theme.semantic.error}60`
+                    : theme.colors.border,
+                  backgroundColor: theme.colors.muted,
+                  paddingHorizontal: 16,
+                  fontFamily: theme.fonts.medium,
+                  fontSize: theme.fontSizes.base,
+                  color: theme.semantic.error,
+                  letterSpacing: 2,
+                }}
+                placeholder={t.profile.deleteAccountConfirmWord}
+                placeholderTextColor={theme.colors.mutedForeground}
+                value={deleteConfirmText}
+                onChangeText={setDeleteConfirmText}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+            </View>
+
+            {/* Actions */}
+            <View style={{ gap: 10 }}>
+              <TouchableOpacity
+                onPress={handleConfirmDelete}
+                disabled={deleteConfirmText !== t.profile.deleteAccountConfirmWord || deleteLoading}
+                activeOpacity={0.75}
+                style={{
+                  height: 50,
+                  borderRadius: 14,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: deleteConfirmText === t.profile.deleteAccountConfirmWord
+                    ? theme.semantic.error
+                    : `${theme.semantic.error}25`,
+                }}
+              >
+                <Text style={{
+                  fontFamily: theme.fonts.bold,
+                  fontSize: theme.fontSizes.base,
+                  color: deleteConfirmText === t.profile.deleteAccountConfirmWord ? '#FFF' : `${theme.semantic.error}60`,
+                }}>
+                  {deleteLoading ? t.common.loading : t.profile.deleteAccount}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowDeleteModal(false)}
+                style={{ height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.muted }}
+              >
+                <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.base, color: theme.colors.foreground }}>
+                  {t.common.cancel}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </GradientCard>
+        </KeyboardAvoidingView>
+      </Modal>
 
-        {/* Logout + Delete Account */}
-        <GradientCard padding={0} style={{ marginBottom: theme.spacing[6] }}>
-          <View style={{ paddingHorizontal: theme.spacing[4] }}>
-            <MenuItem
-              icon={LogOut}
-              label={t.profile.logout}
-              onPress={handleLogout}
-              danger
-            />
-            <MenuItem
-              icon={Trash2}
-              label={t.profile.deleteAccount}
-              onPress={handleDeleteAccount}
-              danger
-            />
-          </View>
-        </GradientCard>
-
-        {/* Version */}
-        <Text
-          style={[
-            {
-              fontFamily: theme.fonts.regular,
-              fontSize: theme.fontSizes.xs,
-              color: theme.colors.mutedForeground,
-              textAlign: 'center',
-              marginBottom: theme.spacing[4],
-            },
-          ]}
-        >
-          Fenix International Company v{Constants.expoConfig?.version ?? '1.0.0'}
-        </Text>
-      </View>
-    </ScreenWrapper>
-
-    {/* Verification overlay */}
-    {showVerification && (
-      <View style={StyleSheet.absoluteFill}>
-        <VerificationScreen onBack={() => setShowVerification(false)} />
-      </View>
-    )}
-
-    {/* Change password modal */}
-    <Modal
-      visible={showChangePassword}
-      transparent
-      animationType="fade"
-      onRequestClose={() => setShowChangePassword(false)}
-    >
-      <KeyboardAvoidingView
-        style={styles.modalOverlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <GlassCard cornerRadius={20} style={styles.modalCard}>
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: theme.colors.foreground, fontFamily: theme.fonts.bold }]}>
-              {t.profile.changePassword}
-            </Text>
-            <TouchableOpacity onPress={() => setShowChangePassword(false)}>
-              <X size={22} color={theme.colors.mutedForeground} />
-            </TouchableOpacity>
-          </View>
-          <TextInput
-            style={[styles.modalInput, { backgroundColor: theme.colors.muted, color: theme.colors.foreground, borderColor: theme.colors.border }]}
-            placeholder={t.profile.changePasswordOld}
-            placeholderTextColor={theme.colors.mutedForeground}
-            secureTextEntry
-            value={oldPassword}
-            onChangeText={setOldPassword}
-          />
-          <TextInput
-            style={[styles.modalInput, { backgroundColor: theme.colors.muted, color: theme.colors.foreground, borderColor: theme.colors.border }]}
-            placeholder={t.profile.changePasswordNew}
-            placeholderTextColor={theme.colors.mutedForeground}
-            secureTextEntry
-            value={newPassword}
-            onChangeText={setNewPassword}
-          />
-          <TextInput
-            style={[styles.modalInput, { backgroundColor: theme.colors.muted, color: theme.colors.foreground, borderColor: theme.colors.border }]}
-            placeholder={t.profile.changePasswordConfirm}
-            placeholderTextColor={theme.colors.mutedForeground}
-            secureTextEntry
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-          />
-          <GoldButton
-            title={changingPassword ? t.common.loading : t.common.save}
-            onPress={handleChangePasswordSubmit}
-            loading={changingPassword}
-            style={{ marginTop: 8 }}
-          />
-        </GlassCard>
-      </KeyboardAvoidingView>
-    </Modal>
-
-    {/* PIN setup overlay */}
-    {showSetupPin && (
-      <View style={StyleSheet.absoluteFill}>
-        <SetupPinScreen
-          onDone={() => setShowSetupPin(false)}
-          onCancel={() => setShowSetupPin(false)}
-        />
-      </View>
-    )}
+      {/* PIN setup overlay */}
+      {showSetupPin && (
+        <View style={StyleSheet.absoluteFill}>
+          <SetupPinScreen onDone={() => setShowSetupPin(false)} onCancel={() => setShowSetupPin(false)} />
+        </View>
+      )}
     </>
   );
 }
 
+// ── MenuItem ──────────────────────────────────────────────────────────────────
+
+function MenuItem({ icon: Icon, label, value, onPress, rightElement, danger, theme }: {
+  icon: any; label: string; value?: string; onPress?: () => void;
+  rightElement?: React.ReactNode; danger?: boolean; theme: any;
+}) {
+  return (
+    <TouchableOpacity onPress={onPress} disabled={!onPress && !rightElement} activeOpacity={0.7}
+      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 13, paddingHorizontal: 14 }}
+    >
+      <View style={{ width: 32, height: 32, borderRadius: 9, backgroundColor: danger ? `${theme.semantic.error}15` : `${theme.colors.mutedForeground}15`, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon size={16} color={danger ? theme.semantic.error : theme.colors.mutedForeground} />
+      </View>
+      <View style={{ flex: 1, marginLeft: 12 }}>
+        <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: danger ? theme.semantic.error : theme.colors.foreground }}>
+          {label}
+        </Text>
+        {value && (
+          <Text style={{ fontFamily: theme.fonts.regular, fontSize: 11, color: theme.colors.mutedForeground, marginTop: 2 }}>{value}</Text>
+        )}
+      </View>
+      {rightElement ?? (onPress && <ChevronRight size={18} color={theme.colors.mutedForeground} />)}
+    </TouchableOpacity>
+  );
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  profileInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  profileDetails: {},
-  profileDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  linkCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  linkHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  linkActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  linkButton: {},
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  menuIcon: {},
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',

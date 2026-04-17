@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList, ActivityIndicator } from 'react-native';
-import { ArrowLeft, CreditCard, Building2, Wallet, X } from 'lucide-react-native';
+import { CreditCard, Building2, Wallet, X } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { GradientCard, GlassCard, GlassInput, GoldButton, GlassSegmentedPicker } from '@/components/ui';
+import { CompactHeader, GradientCard, GlassInput, GoldButton, GlassSegmentedPicker, SectionHeader } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { financeService, WithdrawHistoryItem } from '@/api';
 import { useT } from '@/i18n';
@@ -117,24 +117,13 @@ export function WithdrawalScreen({ onBack }: WithdrawalScreenProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: 60, paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: theme.spacing[3] }]}>
-        <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
-          <GlassCard cornerRadius={theme.borderRadius.full} style={{ padding: theme.spacing[2] }}>
-            <ArrowLeft size={24} color={theme.colors.foreground} />
-          </GlassCard>
-        </TouchableOpacity>
-        <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes.xl, color: theme.colors.foreground, flex: 1, textAlign: 'center' }}>
-          {t.finance.withdrawTitle}
-        </Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <CompactHeader onBack={onBack} title={t.finance.withdrawTitle} />
 
       <FlatList
         data={history}
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: theme.dimensions.tabBarHeight + theme.spacing[4] }}
         ListHeaderComponent={
           <View>
             {/* Wallet Tabs */}
@@ -204,9 +193,7 @@ export function WithdrawalScreen({ onBack }: WithdrawalScreenProps) {
             </GradientCard>
 
             {/* History header */}
-            <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.md, color: theme.colors.foreground, marginBottom: theme.spacing[3] }}>
-              {t.finance.historyTitle}
-            </Text>
+            <SectionHeader title={t.finance.historyTitle} />
             {historyLoading && <ActivityIndicator color={theme.colors.goldForeground} style={{ marginVertical: 16 }} />}
           </View>
         }

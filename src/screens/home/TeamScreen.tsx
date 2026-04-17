@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Platform } from 'react-native';
-import { ChevronLeft, User, Search, X } from 'lucide-react-native';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
+import { User, Search, X } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useT } from '@/i18n';
 import { ScreenWrapper } from '@/components/ui/ScreenWrapper';
 import { GradientCard } from '@/components/ui/GradientCard';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { CompactHeader } from '@/components/ui';
 import { apiClient } from '@/api/client';
 import { ENDPOINTS } from '@/api/config';
 
@@ -119,32 +119,16 @@ export function TeamScreen({ onBack, hideHeader }: Props) {
   const clients = referrals.filter((r) => r.rang === 0).length;
 
   const styles = StyleSheet.create({
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      marginBottom: 16,
-    },
-    backBtn: {
-      padding: 8,
-      borderRadius: theme.borderRadius.full,
-    },
-    title: {
-      fontSize: theme.fontSizes.lg,
-      fontFamily: theme.fonts.bold,
-      color: theme.colors.foreground,
-    },
     subtitle: {
       fontSize: theme.fontSizes.xs,
       color: theme.colors.mutedForeground,
-      marginTop: 2,
     },
     searchContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       borderRadius: theme.borderRadius.xl,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: 'rgba(255,255,255,0.15)',
+      borderColor: theme.colors.border,
       paddingHorizontal: 12,
       marginBottom: 16,
       height: 48,
@@ -181,7 +165,7 @@ export function TeamScreen({ onBack, hideHeader }: Props) {
       paddingVertical: 14,
       paddingHorizontal: 16,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: 'rgba(255,255,255,0.08)',
+      borderBottomColor: theme.colors.border,
       gap: 12,
     },
     avatar: {
@@ -231,21 +215,14 @@ export function TeamScreen({ onBack, hideHeader }: Props) {
       }
     >
       {!hideHeader && (
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
-            <GlassCard cornerRadius={theme.borderRadius.full} style={styles.backBtn}>
-              <ChevronLeft size={20} color={theme.colors.foreground} />
-            </GlassCard>
-          </TouchableOpacity>
-          <View>
-            <Text style={styles.title}>{t.team.title}</Text>
-            <Text style={styles.subtitle}>{t.team.subtitle}</Text>
-          </View>
-        </View>
+        <>
+          <CompactHeader onBack={onBack} title={t.team.title} paddingBottom={theme.spacing[2]} />
+          <Text style={[styles.subtitle, { marginBottom: 16 }]}>{t.team.subtitle}</Text>
+        </>
       )}
 
       {/* Search */}
-      <GlassCard cornerRadius={theme.borderRadius.xl} style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { backgroundColor: theme.colors.inputBackground, borderColor: theme.colors.border }]}>
         <Search size={16} color={theme.colors.mutedForeground} />
         <TextInput
           style={styles.searchInput}
@@ -261,74 +238,79 @@ export function TeamScreen({ onBack, hideHeader }: Props) {
             <X size={16} color={theme.colors.mutedForeground} />
           </TouchableOpacity>
         )}
-      </GlassCard>
-
-      {/* Summary */}
-      <View style={styles.summaryRow}>
-        <GradientCard variant="gold" style={styles.summaryCard}>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={styles.summaryValue}>{total}</Text>
-            <Text style={styles.summaryLabel}>{t.team.total}</Text>
-          </View>
-        </GradientCard>
-        <GradientCard variant="default" style={styles.summaryCard}>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={[styles.summaryValue, { color: theme.colors.foreground }]}>{leaders}</Text>
-            <Text style={styles.summaryLabel}>{t.team.leaders}</Text>
-          </View>
-        </GradientCard>
-        <GradientCard variant="default" style={styles.summaryCard}>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={[styles.summaryValue, { color: theme.colors.foreground }]}>{clients}</Text>
-            <Text style={styles.summaryLabel}>{t.team.clients}</Text>
-          </View>
-        </GradientCard>
       </View>
 
-      {/* List */}
-      <GradientCard variant="default" padding={0} style={{ flex: 1 }}>
-        {loading ? (
-          <View style={{ alignItems: 'center', paddingVertical: 30 }}>
-            <ActivityIndicator color={theme.colors.goldForeground} />
+      {/* Summary — compact single row */}
+      <GradientCard variant="default" style={{ marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontFamily: theme.fonts.bold, fontSize: 20, color: theme.colors.goldForeground }}>{total}</Text>
+            <Text style={{ fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>{t.team.total}</Text>
           </View>
-        ) : referrals.length === 0 ? (
-          <Text style={styles.emptyText}>
+          <View style={{ width: 1, height: 32, backgroundColor: theme.colors.border }} />
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontFamily: theme.fonts.bold, fontSize: 20, color: '#60A5FA' }}>{leaders}</Text>
+            <Text style={{ fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>{t.team.leaders}</Text>
+          </View>
+          <View style={{ width: 1, height: 32, backgroundColor: theme.colors.border }} />
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontFamily: theme.fonts.bold, fontSize: 20, color: theme.colors.foreground }}>{clients}</Text>
+            <Text style={{ fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>{t.team.clients}</Text>
+          </View>
+        </View>
+      </GradientCard>
+
+      {/* List — directly without extra card wrapper */}
+      {loading ? (
+        <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+          <ActivityIndicator color={theme.colors.goldForeground} />
+        </View>
+      ) : referrals.length === 0 ? (
+        <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+          <User size={40} color={theme.colors.mutedForeground} style={{ opacity: 0.3, marginBottom: 8 }} />
+          <Text style={{ textAlign: 'center', color: theme.colors.mutedForeground, fontSize: theme.fontSizes.sm }}>
             {search ? t.team.notFound : t.team.noReferrals}
           </Text>
-        ) : (
-          <FlatList
-            data={referrals}
-            keyExtractor={(item) => String(item.id)}
-            scrollEnabled={true}
-            onEndReached={onEndReached}
-            onEndReachedThreshold={0.3}
-            ListFooterComponent={
-              loadingMore ? (
-                <View style={{ alignItems: 'center', paddingVertical: 12 }}>
-                  <ActivityIndicator size="small" color={theme.colors.goldForeground} />
-                </View>
-              ) : null
-            }
-            renderItem={({ item }) => (
-              <View style={styles.item}>
-                <View style={styles.avatar}>
-                  <User size={20} color={theme.colors.mutedForeground} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.name}>{item.fio || item.login}</Text>
-                  <Text style={styles.login}>ID: {item.login}</Text>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.badge}>
-                    {t.team.rankNames[item.rang as keyof typeof t.team.rankNames] || `${t.team.rank} ${item.rang}`}
-                  </Text>
-                  <Text style={styles.typeLabel}>{t.team.status} {item.status}</Text>
-                </View>
+        </View>
+      ) : (
+        <FlatList
+          data={referrals}
+          keyExtractor={(item) => String(item.id)}
+          scrollEnabled={true}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.3}
+          contentContainerStyle={{ paddingBottom: theme.dimensions.tabBarHeight + theme.spacing[4] }}
+          ListFooterComponent={loadingMore ? (
+            <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+              <ActivityIndicator size="small" color={theme.colors.goldForeground} />
+            </View>
+          ) : null}
+          ItemSeparatorComponent={() => (
+            <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 68 }} />
+          )}
+          renderItem={({ item }) => (
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 4, gap: 12 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: `${theme.gold.primary}18`, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: `${theme.gold.primary}30` }}>
+                <User size={20} color={theme.colors.mutedForeground} />
               </View>
-            )}
-          />
-        )}
-      </GradientCard>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: theme.fontSizes.sm, fontFamily: theme.fonts.semibold, color: theme.colors.foreground }}>{item.fio || item.login}</Text>
+                <Text style={{ fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>ID: {item.login}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ fontSize: theme.fontSizes.xs, fontFamily: theme.fonts.medium, color: item.rang > 0 ? theme.colors.goldForeground : theme.colors.mutedForeground }}>
+                  {t.team.rankNames?.[item.rang as keyof typeof t.team.rankNames] || `${t.team.rank} ${item.rang}`}
+                </Text>
+                {item.totalsum > 0 && (
+                  <Text style={{ fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>
+                    {item.totalsum.toLocaleString('ru-RU')} QV
+                  </Text>
+                )}
+              </View>
+            </View>
+          )}
+        />
+      )}
     </ScreenWrapper>
   );
 }

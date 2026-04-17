@@ -8,7 +8,6 @@ import {
   ScrollView,
 } from 'react-native';
 import {
-  ArrowLeft,
   ShieldCheck,
   ShieldX,
   Clock,
@@ -17,7 +16,7 @@ import {
   Calendar,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { GradientCard } from '@/components/ui';
+import { CompactHeader, GradientCard } from '@/components/ui';
 import { financeService, VerificationStatus } from '@/api';
 import { useAuthStore } from '@/store';
 import { useT } from '@/i18n';
@@ -92,31 +91,15 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
     return new Date(s).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
+  const isUnverified = verifiedVal !== 1 && verif?.status !== 'pending' && verif?.status !== 'rejected';
+  const steps = [t.verification.verifyStep1, t.verification.verifyStep2, t.verification.verifyStep3];
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* Header */}
-      <View style={{
-        flexDirection: 'row', alignItems: 'center',
-        paddingTop: 60, paddingHorizontal: theme.screenPadding.horizontal,
-        paddingBottom: theme.spacing[3],
-      }}>
-        <TouchableOpacity
-          onPress={onBack}
-          style={{ backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.full, padding: theme.spacing[2] }}
-        >
-          <ArrowLeft size={24} color={theme.colors.foreground} />
-        </TouchableOpacity>
-        <Text style={{
-          fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes.xl,
-          color: theme.colors.foreground, flex: 1, textAlign: 'center',
-        }}>
-          {t.verification.title}
-        </Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <CompactHeader onBack={onBack} title={t.verification.title} />
 
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: theme.dimensions.tabBarHeight + theme.spacing[4] }}
         showsVerticalScrollIndicator={false}
       >
         {loading ? (
@@ -202,6 +185,32 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
                 <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>
                   {verif.admin_comment}
                 </Text>
+              </GradientCard>
+            )}
+
+            {/* Инструкции для неверифицированных */}
+            {isUnverified && (
+              <GradientCard style={{ marginBottom: theme.spacing[4] }}>
+                <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground, marginBottom: theme.spacing[3] }}>
+                  {t.verification.howToVerify}
+                </Text>
+                {steps.map((step, i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: i < steps.length - 1 ? theme.spacing[3] : 0 }}>
+                    <View style={{
+                      width: 28, height: 28, borderRadius: 14,
+                      backgroundColor: `${theme.gold.primary}20`,
+                      alignItems: 'center', justifyContent: 'center',
+                      marginRight: theme.spacing[3], flexShrink: 0,
+                    }}>
+                      <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: theme.gold.primary }}>
+                        {i + 1}
+                      </Text>
+                    </View>
+                    <Text style={{ flex: 1, fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, lineHeight: 20, paddingTop: 4 }}>
+                      {step}
+                    </Text>
+                  </View>
+                ))}
               </GradientCard>
             )}
 

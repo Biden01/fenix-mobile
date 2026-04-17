@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User, Lock } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { GoldButton, GlassInput } from '@/components/ui';
+import { GoldButton, GlassInput, GlassCard } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { useT } from '@/i18n';
 
+const REGISTER_URL = 'https://fenixinternationalcompany.kz/register';
+
 interface LoginScreenProps {
-  onRegister: () => void;
   onForgotPassword: () => void;
 }
 
-export function LoginScreen({ onRegister, onForgotPassword }: LoginScreenProps) {
+export function LoginScreen({ onForgotPassword }: LoginScreenProps) {
   const theme = useTheme();
   const t = useT();
   const { login, isLoading, error: storeError, clearError } = useAuthStore();
@@ -89,17 +90,9 @@ export function LoginScreen({ onRegister, onForgotPassword }: LoginScreenProps) 
         </View>
 
         {/* Login Form */}
-        <View
-          style={[
-            styles.formCard,
-            {
-              backgroundColor: theme.colors.card,
-              borderRadius: theme.borderRadius['2xl'],
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-            },
-            theme.shadows.xl,
-          ]}
+        <GlassCard
+          cornerRadius={theme.borderRadius['2xl']}
+          style={[styles.formCard, { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border }, theme.shadows.xl]}
         >
           <Text
             style={[
@@ -196,32 +189,41 @@ export function LoginScreen({ onRegister, onForgotPassword }: LoginScreenProps) 
             ]}
           >
             <Text
-              style={[
-                {
-                  fontFamily: theme.fonts.regular,
-                  fontSize: theme.fontSizes.sm,
-                  color: theme.colors.mutedForeground,
-                  marginBottom: theme.spacing[2],
-                },
-              ]}
+              style={{
+                fontFamily: theme.fonts.regular,
+                fontSize: theme.fontSizes.sm,
+                color: theme.colors.mutedForeground,
+                textAlign: 'center',
+                marginBottom: theme.spacing[3],
+              }}
             >
               {t.auth.noAccount}
             </Text>
-            <TouchableOpacity onPress={onRegister}>
+            <TouchableOpacity
+              onPress={() => Linking.openURL(REGISTER_URL)}
+              activeOpacity={0.7}
+              style={{
+                backgroundColor: `${theme.gold.primary}15`,
+                borderWidth: 1,
+                borderColor: `${theme.gold.primary}40`,
+                borderRadius: theme.borderRadius.xl,
+                paddingVertical: theme.spacing[3],
+                paddingHorizontal: theme.spacing[5],
+                alignItems: 'center',
+              }}
+            >
               <Text
-                style={[
-                  {
-                    fontFamily: theme.fonts.semibold,
-                    fontSize: theme.fontSizes.sm,
-                    color: theme.colors.goldForeground,
-                  },
-                ]}
+                style={{
+                  fontFamily: theme.fonts.semibold,
+                  fontSize: theme.fontSizes.sm,
+                  color: theme.colors.goldForeground,
+                }}
               >
-                {t.auth.register}
+                {t.auth.registerOnSite}
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </GlassCard>
 
         <Text
           style={[

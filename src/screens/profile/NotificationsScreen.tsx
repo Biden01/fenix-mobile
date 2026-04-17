@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
-import { ArrowLeft, Bell, Gift, Users, TrendingUp, ShoppingBag, CheckCircle } from 'lucide-react-native';
+import { Bell, Gift, Users, TrendingUp, ShoppingBag, CheckCheck } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/theme';
-import { GradientCard } from '@/components/ui';
+import { CompactHeader, GradientCard, SectionHeader } from '@/components/ui';
 import { notificationService, NotificationItem } from '@/api';
 import { useT } from '@/i18n';
 import { useNotificationStore } from '@/store';
@@ -18,6 +18,10 @@ interface DisplayNotification {
   date: string;
   read: boolean;
 }
+
+type ListItem =
+  | { kind: 'header'; label: string }
+  | { kind: 'notification'; data: DisplayNotification };
 
 interface NotificationsScreenProps {
   onBack: () => void;
@@ -52,20 +56,15 @@ export function NotificationsScreen({ onBack, hideHeader, isModal }: Notificatio
       if (!('error' in result)) {
         const items = result.data.items.map(mapItem);
         const total: number = result.data.total ?? 0;
-
         if (replace) {
           setNotifications(items);
-          // Update badge from fresh page-1 data
-          const newUnread = items.filter((n) => !n.read).length;
-          setUnreadCount(newUnread);
+          setUnreadCount(items.filter((n) => !n.read).length);
         } else {
           setNotifications((prev) => {
             const existingIds = new Set(prev.map((n) => n.id));
-            const fresh = items.filter((n) => !existingIds.has(n.id));
-            return [...prev, ...fresh];
+            return [...prev, ...items.filter((n) => !existingIds.has(n.id))];
           });
         }
-
         const loaded = replace ? items.length : (page - 1) * PER_PAGE + items.length;
         setHasMore(loaded < total);
       }
@@ -81,9 +80,7 @@ export function NotificationsScreen({ onBack, hideHeader, isModal }: Notificatio
     setLoading(false);
   }, [loadPage]);
 
-  useEffect(() => {
-    initialLoad();
-  }, [initialLoad]);
+  useEffect(() => { initialLoad(); }, [initialLoad]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -104,19 +101,25 @@ export function NotificationsScreen({ onBack, hideHeader, isModal }: Notificatio
     loadingMoreRef.current = false;
   }, [hasMore, loadPage]);
 
-  const getNotificationIcon = (type: string) => {
+  const getIconConfig = (type: string) => {
     switch (type) {
-      case 'bonus':
-        return { icon: Gift, color: theme.semantic.success };
-      case 'referral':
-        return { icon: Users, color: theme.semantic.info };
-      case 'rank':
-        return { icon: TrendingUp, color: theme.colors.goldForeground };
-      case 'order':
-        return { icon: ShoppingBag, color: theme.semantic.warning };
-      default:
-        return { icon: Bell, color: theme.colors.mutedForeground };
+      case 'bonus':    return { icon: Gift,        color: theme.semantic.success };
+      case 'referral': return { icon: Users,       color: theme.semantic.info };
+      case 'rank':     return { icon: TrendingUp,  color: theme.colors.goldForeground };
+      case 'order':    return { icon: ShoppingBag, color: theme.semantic.warning };
+      default:         return { icon: Bell,        color: theme.colors.mutedForeground };
     }
+  };
+
+  const getDateGroup = (dateString: string): string => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return t.notifications.earlier ?? 'Earlier';
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return t.notifications.today ?? 'Today';
+    if (diffDays === 1) return t.notifications.yesterday ?? 'Yesterday';
+    if (diffDays < 7)  return t.notifications.thisWeek ?? 'This Week';
+    return t.notifications.earlier ?? 'Earlier';
   };
 
   const formatDate = (dateString: string) => {
@@ -126,93 +129,31 @@ export function NotificationsScreen({ onBack, hideHeader, isModal }: Notificatio
     const diff = now.getTime() - date.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(hours / 24);
-
-    if (hours < 1) return t.notifications.justNow;
+    if (hours < 1)  return t.notifications.justNow;
     if (hours < 24) return `${hours} ${t.notifications.hoursAgo}`;
-    if (days < 7) return `${days} ${t.notifications.daysAgo}`;
+    if (days < 7)   return `${days} ${t.notifications.daysAgo}`;
     return date.toLocaleDateString('ru-RU');
   };
 
-  const renderNotification = ({ item }: { item: DisplayNotification }) => {
-    const { icon: Icon, color } = getNotificationIcon(item.type);
-
-    return (
-      <GradientCard
-        style={{
-          marginBottom: theme.spacing[2],
-          ...(!item.read && {
-            borderWidth: 1,
-            borderColor: theme.gold.primary,
-          }),
-        }}
-        padding={theme.spacing[3]}
-      >
-        <View style={styles.notificationRow}>
-          <View
-            style={[
-              styles.notificationIcon,
-              {
-                backgroundColor: `${color}20`,
-                borderRadius: theme.borderRadius.full,
-                padding: theme.spacing[2],
-              },
-            ]}
-          >
-            <Icon size={20} color={color} />
-          </View>
-
-          <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
-            <View style={styles.notificationHeader}>
-              <Text
-                style={{
-                  fontFamily: item.read ? theme.fonts.medium : theme.fonts.bold,
-                  fontSize: theme.fontSizes.sm,
-                  color: theme.colors.foreground,
-                  flex: 1,
-                }}
-              >
-                {item.title}
-              </Text>
-              {!item.read && (
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: theme.gold.primary,
-                    marginLeft: theme.spacing[2],
-                  }}
-                />
-              )}
-            </View>
-            <Text
-              style={{
-                fontFamily: theme.fonts.regular,
-                fontSize: theme.fontSizes.xs,
-                color: theme.colors.mutedForeground,
-                marginTop: 4,
-              }}
-              numberOfLines={2}
-            >
-              {item.message}
-            </Text>
-            <Text
-              style={{
-                fontFamily: theme.fonts.regular,
-                fontSize: 10,
-                color: theme.colors.mutedForeground,
-                marginTop: theme.spacing[2],
-              }}
-            >
-              {formatDate(item.date)}
-            </Text>
-          </View>
-        </View>
-      </GradientCard>
-    );
+  // Build grouped list items
+  const buildListItems = (): ListItem[] => {
+    const groups: { [key: string]: DisplayNotification[] } = {};
+    const order: string[] = [];
+    for (const n of notifications) {
+      const group = getDateGroup(n.date);
+      if (!groups[group]) { groups[group] = []; order.push(group); }
+      groups[group].push(n);
+    }
+    const items: ListItem[] = [];
+    for (const label of order) {
+      items.push({ kind: 'header', label });
+      for (const n of groups[label]) items.push({ kind: 'notification', data: n });
+    }
+    return items;
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const listItems = buildListItems();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -224,131 +165,93 @@ export function NotificationsScreen({ onBack, hideHeader, isModal }: Notificatio
           </TouchableOpacity>
         </View>
       ) : !hideHeader ? (
-        <View
-          style={[
-            styles.header,
-            {
-              paddingTop: 60,
-              paddingHorizontal: theme.screenPadding.horizontal,
-              paddingBottom: theme.spacing[4],
-            },
-          ]}
-        >
-          <TouchableOpacity
-            onPress={onBack}
-            style={[
-              styles.backButton,
-              {
-                backgroundColor: theme.colors.card,
-                borderRadius: theme.borderRadius.full,
-                padding: theme.spacing[2],
-              },
-            ]}
-          >
-            <ArrowLeft size={24} color={theme.colors.foreground} />
-          </TouchableOpacity>
-          <Text
-            style={{
-              fontFamily: theme.fonts.displayBold,
-              fontSize: theme.fontSizes.xl,
-              color: theme.colors.foreground,
-              flex: 1,
-              textAlign: 'center',
-            }}
-          >
-            {t.notifications.title}
-          </Text>
-          <View style={{ width: 40 }} />
-        </View>
-      ) : null}
-
-      {unreadCount > 0 && (
-        <View
-          style={{
-            paddingHorizontal: theme.screenPadding.horizontal,
-            marginBottom: theme.spacing[4],
-          }}
-        >
-          <TouchableOpacity
-            onPress={async () => {
-              await notificationService.markAllRead();
-              setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-              setUnreadCount(0);
-            }}
-            style={[
-              styles.markAllRead,
-              {
-                backgroundColor: theme.gold.light,
-                borderRadius: theme.borderRadius.lg,
-                padding: theme.spacing[3],
-                borderWidth: 1,
-                borderColor: `${theme.gold.primary}30`,
-              },
-            ]}
-          >
-            <CheckCircle size={18} color={theme.colors.goldForeground} />
-            <Text
-              style={{
-                fontFamily: theme.fonts.medium,
-                fontSize: theme.fontSizes.sm,
-                color: theme.colors.goldForeground,
-                marginLeft: theme.spacing[2],
+        <CompactHeader
+          onBack={onBack}
+          title={t.notifications.title}
+          paddingBottom={theme.spacing[4]}
+          right={unreadCount > 0 ? (
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={async () => {
+                await notificationService.markAllRead();
+                setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+                setUnreadCount(0);
               }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: `${theme.gold.primary}18`, borderRadius: 99 }}
             >
-              {t.notifications.markAllRead} ({unreadCount})
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+              <CheckCheck size={14} color={theme.colors.goldForeground} />
+              <Text style={{ fontFamily: theme.fonts.medium, fontSize: 12, color: theme.colors.goldForeground }}>{t.notifications.markAllRead}</Text>
+            </TouchableOpacity>
+          ) : undefined}
+        />
+      ) : null}
 
       {loading ? (
         <View style={{ alignItems: 'center', padding: 40 }}>
           <ActivityIndicator size="large" color={theme.colors.goldForeground} />
-          <Text style={{ marginTop: 12, color: theme.colors.mutedForeground }}>
-            {t.notifications.loading}
-          </Text>
+        </View>
+      ) : notifications.length === 0 ? (
+        <View style={{ alignItems: 'center', paddingTop: 80 }}>
+          <Bell size={48} color={theme.colors.mutedForeground} style={{ opacity: 0.3, marginBottom: 12 }} />
+          <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground }}>{t.notifications.empty}</Text>
         </View>
       ) : (
         <FlatList
-          data={notifications}
-          renderItem={renderNotification}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{
-            paddingHorizontal: theme.screenPadding.horizontal,
-            paddingBottom: 40,
-          }}
+          data={listItems}
+          keyExtractor={(item) => item.kind === 'header' ? `h-${item.label}` : `n-${item.data.id}`}
+          contentContainerStyle={{ paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: theme.dimensions.tabBarHeight + theme.spacing[4] }}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={theme.gold.primary}
-            />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.gold.primary} />}
           onEndReached={onEndReached}
           onEndReachedThreshold={0.3}
-          ListFooterComponent={
-            loadingMore ? (
-              <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-                <ActivityIndicator size="small" color={theme.colors.goldForeground} />
-              </View>
-            ) : null
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Bell size={64} color={theme.colors.mutedForeground} />
-              <Text
-                style={{
-                  fontFamily: theme.fonts.medium,
-                  fontSize: theme.fontSizes.md,
-                  color: theme.colors.mutedForeground,
-                  marginTop: theme.spacing[4],
-                }}
-              >
-                {t.notifications.empty}
-              </Text>
+          ListFooterComponent={loadingMore ? (
+            <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+              <ActivityIndicator size="small" color={theme.colors.goldForeground} />
             </View>
-          }
+          ) : null}
+          renderItem={({ item, index }) => {
+            if (item.kind === 'header') {
+              return <SectionHeader title={item.label} />;
+            }
+
+            const n = item.data;
+            const { icon: Icon, color } = getIconConfig(n.type);
+
+            // Check if this is the last in its group
+            const next = listItems[index + 1];
+            const isLast = !next || next.kind === 'header';
+
+            return (
+              <View style={{ backgroundColor: theme.colors.card, borderRadius: isLast ? undefined : 0, overflow: 'hidden' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', padding: 14 }}>
+                  {/* Unread indicator strip */}
+                  {!n.read && (
+                    <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: theme.gold.primary, borderRadius: 2 }} />
+                  )}
+                  {/* Icon */}
+                  <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: `${color}18`, alignItems: 'center', justifyContent: 'center', marginLeft: !n.read ? 10 : 0 }}>
+                    <Icon size={18} color={color} />
+                  </View>
+                  {/* Content */}
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={{ fontFamily: n.read ? theme.fonts.medium : theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }} numberOfLines={2}>
+                      {n.title}
+                    </Text>
+                    <Text style={{ fontFamily: theme.fonts.regular, fontSize: 11, color: theme.colors.mutedForeground, marginTop: 3 }}>
+                      {formatDate(n.date)}
+                    </Text>
+                  </View>
+                  {/* Unread dot */}
+                  {!n.read && (
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.gold.primary, marginTop: 6 }} />
+                  )}
+                </View>
+                {!isLast && (
+                  <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 66 }} />
+                )}
+              </View>
+            );
+          }}
         />
       )}
     </View>
@@ -358,29 +261,5 @@ export function NotificationsScreen({ onBack, hideHeader, isModal }: Notificatio
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backButton: {},
-  markAllRead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  notificationRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  notificationIcon: {},
-  notificationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 100,
   },
 });

@@ -19,7 +19,6 @@
       }
     },
     "production": {
-      "autoIncrement": true,
       "ios": {
         "buildConfiguration": "Release",
         "image": "latest"
@@ -32,7 +31,8 @@
   "submit": {
     "production": {
       "ios": {
-        "language": "ru"
+        "language": "ru",
+        "ascAppId": "6759987997"
       },
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",

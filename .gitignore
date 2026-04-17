@@ -6,6 +6,7 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+.agents/
 
 # Native builds
 *.orig.*
@@ -42,6 +43,7 @@ coverage/
 .vscode/
 *.swp
 *.swo
+.claude/worktrees/
 
 # iOS
 ios/Pods/
@@ -50,7 +52,17 @@ ios/DerivedData/
 ios/*.xcworkspace/xcuserdata/
 ios/*.xcodeproj/xcuserdata/
 
+# Android local / generated
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+android/app/debug.keystore
+
 # Screenshots / temp files
 *.png
 !assets/**/*.png
 !ios/Fenix/Images.xcassets/AppIcon.appiconset/*.png
+assets/icon_backup.png

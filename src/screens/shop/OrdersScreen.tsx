@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
-import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Truck } from 'lucide-react-native';
+import { Package, Clock, CheckCircle, XCircle, Truck } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { GradientCard, StatusBadge } from '@/components/ui';
+import { CompactHeader, GradientCard } from '@/components/ui';
 import { shopService, PurchaseHistoryItem } from '@/api';
 import { useT } from '@/i18n';
 
@@ -30,14 +30,13 @@ export function OrdersScreen({ onBack, hideHeader }: OrdersScreenProps) {
     try {
       const result = await shopService.getPurchaseHistory(1, 50);
       if (!('error' in result)) {
-        const mapped: DisplayOrder[] = result.data.items.map((item: PurchaseHistoryItem) => ({
+        setOrders(result.data.items.map((item: PurchaseHistoryItem) => ({
           id: item.id.toString(),
           date: item.date,
-          status: 'delivered', // API doesn't return status, default to delivered
+          status: 'delivered',
           total: item.amount,
           product: item.product,
-        }));
-        setOrders(mapped);
+        })));
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -46,9 +45,7 @@ export function OrdersScreen({ onBack, hideHeader }: OrdersScreenProps) {
     }
   }, []);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -56,249 +53,73 @@ export function OrdersScreen({ onBack, hideHeader }: OrdersScreenProps) {
     setRefreshing(false);
   }, [fetchOrders]);
 
-  const getStatusInfo = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
-      case 'delivered':
-        return {
-          label: t.shop.statusDelivered,
-          variant: 'success' as const,
-          icon: CheckCircle,
-          color: theme.semantic.success,
-        };
-      case 'shipping':
-        return {
-          label: t.shop.statusShipping,
-          variant: 'info' as const,
-          icon: Truck,
-          color: theme.semantic.info,
-        };
-      case 'processing':
-        return {
-          label: t.shop.statusProcessing,
-          variant: 'warning' as const,
-          icon: Clock,
-          color: theme.semantic.warning,
-        };
-      case 'cancelled':
-        return {
-          label: t.shop.statusCancelled,
-          variant: 'error' as const,
-          icon: XCircle,
-          color: theme.semantic.error,
-        };
-      default:
-        return {
-          label: status,
-          variant: 'muted' as const,
-          icon: Package,
-          color: theme.colors.mutedForeground,
-        };
+      case 'delivered':  return { label: t.shop.statusDelivered,  color: theme.semantic.success, bg: `${theme.semantic.success}18`, icon: CheckCircle };
+      case 'shipping':   return { label: t.shop.statusShipping,   color: theme.semantic.info,    bg: `${theme.semantic.info}18`,    icon: Truck };
+      case 'processing': return { label: t.shop.statusProcessing, color: theme.semantic.warning, bg: `${theme.semantic.warning}18`, icon: Clock };
+      case 'cancelled':  return { label: t.shop.statusCancelled,  color: theme.semantic.error,   bg: `${theme.semantic.error}18`,   icon: XCircle };
+      default:           return { label: status,                  color: theme.colors.mutedForeground, bg: theme.colors.muted,     icon: Package };
     }
-  };
-
-  const renderOrder = ({ item }: { item: DisplayOrder }) => {
-    const statusInfo = getStatusInfo(item.status);
-    const StatusIcon = statusInfo.icon;
-
-    return (
-      <GradientCard style={{ marginBottom: theme.spacing[3] }}>
-        <View style={styles.orderHeader}>
-          <View style={styles.orderInfo}>
-            <Text
-              style={[
-                {
-                  fontFamily: theme.fonts.bold,
-                  fontSize: theme.fontSizes.md,
-                  color: theme.colors.foreground,
-                },
-              ]}
-            >
-              #{item.id}
-            </Text>
-            <Text
-              style={[
-                {
-                  fontFamily: theme.fonts.regular,
-                  fontSize: theme.fontSizes.xs,
-                  color: theme.colors.mutedForeground,
-                  marginTop: 2,
-                },
-              ]}
-            >
-              {new Date(item.date).toLocaleDateString('ru-RU')}
-            </Text>
-          </View>
-          <StatusBadge label={statusInfo.label} variant={statusInfo.variant} />
-        </View>
-
-        <View
-          style={[
-            styles.orderItems,
-            {
-              marginTop: theme.spacing[3],
-              paddingTop: theme.spacing[3],
-              borderTopWidth: 1,
-              borderTopColor: theme.colors.border,
-            },
-          ]}
-        >
-          <View style={styles.orderItemRow}>
-            <View
-              style={[
-                {
-                  backgroundColor: theme.colors.muted,
-                  borderRadius: theme.borderRadius.lg,
-                  padding: theme.spacing[2],
-                  marginRight: theme.spacing[3],
-                },
-              ]}
-            >
-              <Package size={20} color={theme.colors.mutedForeground} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[
-                  {
-                    fontFamily: theme.fonts.medium,
-                    fontSize: theme.fontSizes.sm,
-                    color: theme.colors.foreground,
-                  },
-                ]}
-                numberOfLines={1}
-              >
-                {item.product}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View
-          style={[
-            styles.orderFooter,
-            {
-              marginTop: theme.spacing[3],
-              paddingTop: theme.spacing[3],
-              borderTopWidth: 1,
-              borderTopColor: theme.colors.border,
-            },
-          ]}
-        >
-          <View style={styles.orderStatusRow}>
-            <StatusIcon size={16} color={statusInfo.color} />
-            <Text
-              style={[
-                {
-                  fontFamily: theme.fonts.medium,
-                  fontSize: theme.fontSizes.xs,
-                  color: statusInfo.color,
-                  marginLeft: theme.spacing[1],
-                },
-              ]}
-            >
-              {statusInfo.label}
-            </Text>
-          </View>
-          <Text
-            style={[
-              {
-                fontFamily: theme.fonts.bold,
-                fontSize: theme.fontSizes.md,
-                color: theme.colors.goldForeground,
-              },
-            ]}
-          >
-            {item.total.toLocaleString('ru-KZ')} ₸
-          </Text>
-        </View>
-      </GradientCard>
-    );
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
       {!hideHeader && (
-        <View
-          style={[
-            styles.header,
-            {
-              paddingTop: 60,
-              paddingHorizontal: theme.screenPadding.horizontal,
-              paddingBottom: theme.spacing[4],
-            },
-          ]}
-        >
-          <TouchableOpacity
-            onPress={onBack}
-            style={[
-              styles.backButton,
-              {
-                backgroundColor: theme.colors.card,
-                borderRadius: theme.borderRadius.full,
-                padding: theme.spacing[2],
-              },
-            ]}
-          >
-            <ArrowLeft size={24} color={theme.colors.foreground} />
-          </TouchableOpacity>
-          <Text
-            style={[
-              {
-                fontFamily: theme.fonts.displayBold,
-                fontSize: theme.fontSizes.xl,
-                color: theme.colors.foreground,
-                flex: 1,
-                textAlign: 'center',
-              },
-            ]}
-          >
-            {t.shop.orders}
-          </Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <CompactHeader onBack={onBack} title={t.shop.orders} paddingBottom={theme.spacing[4]} />
       )}
 
       {loading ? (
         <View style={{ alignItems: 'center', padding: 40 }}>
           <ActivityIndicator size="large" color={theme.colors.goldForeground} />
-          <Text style={{ marginTop: 12, color: theme.colors.mutedForeground }}>
-            {t.shop.loadingOrders}
-          </Text>
         </View>
       ) : (
         <FlatList
           data={orders}
-          renderItem={renderOrder}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{
-            paddingHorizontal: theme.screenPadding.horizontal,
-            paddingBottom: 40,
-          }}
+          contentContainerStyle={{ paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: theme.dimensions.tabBarHeight + theme.spacing[4] }}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={theme.gold.primary}
-            />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.gold.primary} />}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Package size={64} color={theme.colors.mutedForeground} />
-              <Text
-                style={[
-                  {
-                    fontFamily: theme.fonts.medium,
-                    fontSize: theme.fontSizes.md,
-                    color: theme.colors.mutedForeground,
-                    marginTop: theme.spacing[4],
-                  },
-                ]}
-              >
-                {t.shop.emptyOrders}
-              </Text>
+            <View style={{ alignItems: 'center', paddingTop: 80 }}>
+              <Package size={48} color={theme.colors.mutedForeground} style={{ opacity: 0.3, marginBottom: 12 }} />
+              <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground }}>{t.shop.emptyOrders}</Text>
             </View>
           }
+          renderItem={({ item }) => {
+            const cfg = getStatusConfig(item.status);
+            const Icon = cfg.icon;
+            return (
+              <GradientCard style={{ marginBottom: theme.spacing[3] }} padding={14}>
+                {/* Row 1: Order # + date + status badge */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <View>
+                    <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>#{item.id}</Text>
+                    <Text style={{ fontSize: 11, color: theme.colors.mutedForeground, marginTop: 2 }}>
+                      {new Date(item.date).toLocaleDateString('ru-RU')}
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: cfg.bg, borderRadius: 99 }}>
+                    <Icon size={12} color={cfg.color} />
+                    <Text style={{ fontSize: 12, fontFamily: theme.fonts.medium, color: cfg.color }}>{cfg.label}</Text>
+                  </View>
+                </View>
+
+                {/* Row 2: Product + amount */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border, gap: 10 }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: theme.colors.muted, alignItems: 'center', justifyContent: 'center' }}>
+                    <Package size={18} color={theme.colors.mutedForeground} />
+                  </View>
+                  <Text style={{ flex: 1, fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }} numberOfLines={2}>
+                    {item.product}
+                  </Text>
+                  <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: theme.colors.goldForeground }}>
+                    {item.total.toLocaleString('ru-KZ')} ₸
+                  </Text>
+                </View>
+              </GradientCard>
+            );
+          }}
         />
       )}
     </View>
@@ -306,38 +127,5 @@ export function OrdersScreen({ onBack, hideHeader }: OrdersScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backButton: {},
-  orderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  orderInfo: {},
-  orderItems: {},
-  orderItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  orderFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  orderStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 100,
-  },
+  container: { flex: 1 },
 });

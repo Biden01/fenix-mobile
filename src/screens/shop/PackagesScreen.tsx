@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
-import { ArrowLeft, Package, Star, Zap, Crown, CheckCircle, CreditCard, X } from 'lucide-react-native';
+import { Package, Star, Zap, Crown, CheckCircle, CreditCard, X } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '@/theme';
-import { GoldButton, GlassCard, StatusBadge } from '@/components/ui';
+import { CompactHeader, GoldButton, GlassCard, StatusBadge } from '@/components/ui';
 import { shopService } from '@/api';
 import { apiClient } from '@/api/client';
 import { useAuthStore } from '@/store';
@@ -219,45 +219,12 @@ export function PackagesScreen({ onBack, onPurchaseSuccess }: PackagesScreenProp
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: 60,
-            paddingHorizontal: theme.screenPadding.horizontal,
-            paddingBottom: theme.spacing[4],
-          },
-        ]}
-      >
-        <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
-          <GlassCard
-            cornerRadius={theme.borderRadius.full}
-            style={[styles.backButton, { padding: theme.spacing[2] }]}
-          >
-            <ArrowLeft size={24} color={theme.colors.foreground} />
-          </GlassCard>
-        </TouchableOpacity>
-        <Text
-          style={[
-            {
-              fontFamily: theme.fonts.displayBold,
-              fontSize: theme.fontSizes.xl,
-              color: theme.colors.foreground,
-              flex: 1,
-              textAlign: 'center',
-            },
-          ]}
-        >
-          {t.shop.starterPackages}
-        </Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <CompactHeader onBack={onBack} title={t.shop.starterPackages} paddingBottom={theme.spacing[4]} />
 
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: theme.screenPadding.horizontal,
-          paddingBottom: 40,
+          paddingBottom: theme.dimensions.tabBarHeight + theme.spacing[4],
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -292,7 +259,7 @@ export function PackagesScreen({ onBack, onPurchaseSuccess }: PackagesScreenProp
                 styles.packageCard,
                 {
                   borderWidth: meta.recommended ? 2 : StyleSheet.hairlineWidth,
-                  borderColor: meta.recommended ? theme.gold.primary : 'rgba(255,255,255,0.12)',
+                  borderColor: meta.recommended ? theme.gold.primary : theme.colors.border,
                   padding: theme.spacing[5],
                   marginBottom: theme.spacing[4],
                 },

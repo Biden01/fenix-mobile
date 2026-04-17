@@ -7,15 +7,228 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
-import { Search, Users, TrendingUp, ChevronRight, ChevronDown } from 'lucide-react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  withSpring,
+  Easing,
+} from 'react-native-reanimated';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import {
+  Search,
+  Users,
+  TrendingUp,
+  ChevronRight,
+  ChevronDown,
+  UserPlus,
+  GitBranch,
+} from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { ScreenWrapper, GradientCard, GlassInput, RankBadge, Tabs, Avatar } from '@/components/ui';
+import {
+  ScreenWrapper,
+  GlassInput,
+  RankBadge,
+  Tabs,
+  Avatar,
+  MiniStatCard,
+} from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { treeService, TreeNode as TreeNodeType, VolumeResponse, ReferralChild } from '@/api';
 import { useT } from '@/i18n';
 
-// ─── Binary tree ─────────────────────────────────────────────────────────────
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
+
+const EXPAND_ANIMATION = {
+  duration: 220,
+  create: { type: 'easeInEaseOut', property: 'opacity' },
+  update: { type: 'easeInEaseOut' },
+  delete: { type: 'easeInEaseOut', property: 'opacity' },
+};
+
+// ─── Skeleton row ─────────────────────────────────────────────────────────────
+
+function SkeletonRow({ theme }: { theme: ReturnType<typeof useTheme> }) {
+  const opacity = useSharedValue(0.3);
+
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.7, { duration: 650 }),
+        withTiming(0.3, { duration: 650 }),
+      ),
+      -1,
+      false,
+    );
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  return (
+    <Animated.View
+      style={[
+        animStyle,
+        {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          gap: 10,
+        },
+      ]}
+    >
+      <View
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: theme.colors.muted,
+        }}
+      />
+      <View style={{ flex: 1, gap: 6 }}>
+        <View
+          style={{
+            height: 13,
+            borderRadius: 7,
+            backgroundColor: theme.colors.muted,
+            width: '55%',
+          }}
+        />
+        <View
+          style={{
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: theme.colors.muted,
+            width: '35%',
+          }}
+        />
+      </View>
+      <View
+        style={{
+          width: 50,
+          height: 20,
+          borderRadius: 10,
+          backgroundColor: theme.colors.muted,
+        }}
+      />
+    </Animated.View>
+  );
+}
+
+function StructureSkeleton({ theme }: { theme: ReturnType<typeof useTheme> }) {
+  return (
+    <View
+      style={{
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        borderRadius: theme.borderRadius['2xl'],
+        overflow: 'hidden',
+        marginBottom: theme.spacing[6],
+      }}
+    >
+      {[0, 1, 2, 3, 4].map((i) => (
+        <SkeletonRow key={i} theme={theme} />
+      ))}
+    </View>
+  );
+}
+
+// ─── Empty binary tree slot ───────────────────────────────────────────────────
+
+interface EmptySlotProps {
+  theme: ReturnType<typeof useTheme>;
+  onPress?: () => void;
+}
+
+function EmptySlot({ theme, onPress }: EmptySlotProps) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={onPress ? 0.7 : 1}
+      style={[
+        styles.emptyNode,
+        {
+          borderColor: `${theme.colors.border}80`,
+          borderRadius: theme.borderRadius.full,
+        },
+      ]}
+    >
+      <UserPlus size={20} color={theme.colors.mutedForeground} strokeWidth={1.5} />
+    </TouchableOpacity>
+  );
+}
+
+// ─── Zoomable tree wrapper ────────────────────────────────────────────────────
+
+function ZoomableTree({ children }: { children: React.ReactNode }) {
+  const scale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedScale = useSharedValue(1);
+  const savedTX = useSharedValue(0);
+  const savedTY = useSharedValue(0);
+
+  const pinch = Gesture.Pinch()
+    .onUpdate((e) => {
+      scale.value = Math.max(0.4, Math.min(2.5, savedScale.value * e.scale));
+    })
+    .onEnd(() => {
+      savedScale.value = scale.value;
+    });
+
+  const pan = Gesture.Pan()
+    .minDistance(8)
+    .onUpdate((e) => {
+      translateX.value = savedTX.value + e.translationX;
+      translateY.value = savedTY.value + e.translationY;
+    })
+    .onEnd(() => {
+      savedTX.value = translateX.value;
+      savedTY.value = translateY.value;
+    });
+
+  const doubleTap = Gesture.Tap()
+    .numberOfTaps(2)
+    .onEnd(() => {
+      scale.value = withSpring(1, { damping: 15 });
+      translateX.value = withSpring(0, { damping: 15 });
+      translateY.value = withSpring(0, { damping: 15 });
+      savedScale.value = 1;
+      savedTX.value = 0;
+      savedTY.value = 0;
+    });
+
+  const composed = Gesture.Race(doubleTap, Gesture.Simultaneous(pinch, pan));
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+  }));
+
+  return (
+    <GestureDetector gesture={composed}>
+      <View style={styles.zoomContainer}>
+        <Animated.View style={[animStyle, { padding: 20 }]}>
+          {children}
+        </Animated.View>
+      </View>
+    </GestureDetector>
+  );
+}
+
+// ─── Binary tree node ─────────────────────────────────────────────────────────
 
 interface DisplayTreeNode {
   id: string;
@@ -40,7 +253,7 @@ const transformTreeNode = (node: TreeNodeType | null): DisplayTreeNode | null =>
 
 interface TreeNodeComponentProps {
   node: DisplayTreeNode;
-  theme: any;
+  theme: ReturnType<typeof useTheme>;
   expanded: Set<string>;
   toggleExpanded: (id: string) => void;
 }
@@ -49,19 +262,29 @@ function TreeNodeComponent({ node, theme, expanded, toggleExpanded }: TreeNodeCo
   const hasChildren = node.left || node.right;
   const isExpanded = expanded.has(node.id);
 
+  const handlePress = () => {
+    if (!hasChildren) return;
+    LayoutAnimation.configureNext(EXPAND_ANIMATION);
+    toggleExpanded(node.id);
+  };
+
   return (
     <View style={styles.treeNodeContainer}>
       <TouchableOpacity
-        onPress={() => hasChildren && toggleExpanded(node.id)}
+        onPress={handlePress}
+        activeOpacity={hasChildren ? 0.7 : 1}
         style={[
           styles.treeNode,
           {
             backgroundColor: theme.colors.card,
             borderRadius: theme.borderRadius.xl,
-            borderWidth: 2,
-            borderColor: theme.colors.border,
+            borderWidth: 1.5,
+            borderColor: hasChildren
+              ? `${theme.gold.primary}50`
+              : theme.colors.border,
             padding: theme.spacing[3],
-            minWidth: 120,
+            minWidth: 110,
+            minHeight: 44,
           },
           theme.shadows.md,
         ]}
@@ -90,25 +313,46 @@ function TreeNodeComponent({ node, theme, expanded, toggleExpanded }: TreeNodeCo
         >
           {(node.qv ?? 0).toLocaleString()} QV
         </Text>
+        {hasChildren && (
+          <ChevronDown
+            size={12}
+            color={theme.colors.mutedForeground}
+            style={{
+              marginTop: 4,
+              transform: [{ rotate: isExpanded ? '180deg' : '0deg' }],
+            }}
+          />
+        )}
       </TouchableOpacity>
 
       {hasChildren && isExpanded && (
         <View style={styles.childrenContainer}>
-          <View style={[styles.connectorLine, { backgroundColor: theme.colors.border }]} />
+          <View
+            style={[
+              styles.connectorVertical,
+              { backgroundColor: `${theme.gold.primary}40` },
+            ]}
+          />
           <View style={styles.childrenRow}>
             {node.left ? (
-              <TreeNodeComponent node={node.left} theme={theme} expanded={expanded} toggleExpanded={toggleExpanded} />
+              <TreeNodeComponent
+                node={node.left}
+                theme={theme}
+                expanded={expanded}
+                toggleExpanded={toggleExpanded}
+              />
             ) : (
-              <View style={[styles.emptyNode, { borderColor: theme.colors.border, borderRadius: theme.borderRadius.full }]}>
-                <Text style={{ color: theme.colors.mutedForeground, fontSize: 24 }}>+</Text>
-              </View>
+              <EmptySlot theme={theme} />
             )}
             {node.right ? (
-              <TreeNodeComponent node={node.right} theme={theme} expanded={expanded} toggleExpanded={toggleExpanded} />
+              <TreeNodeComponent
+                node={node.right}
+                theme={theme}
+                expanded={expanded}
+                toggleExpanded={toggleExpanded}
+              />
             ) : (
-              <View style={[styles.emptyNode, { borderColor: theme.colors.border, borderRadius: theme.borderRadius.full }]}>
-                <Text style={{ color: theme.colors.mutedForeground, fontSize: 24 }}>+</Text>
-              </View>
+              <EmptySlot theme={theme} />
             )}
           </View>
         </View>
@@ -117,11 +361,11 @@ function TreeNodeComponent({ node, theme, expanded, toggleExpanded }: TreeNodeCo
   );
 }
 
-// ─── Linear node (lazy load children on expand, like fenix-web) ──────────────
+// ─── Referral / linear node ───────────────────────────────────────────────────
 
 interface ReferralNodeProps {
   node: ReferralChild;
-  theme: any;
+  theme: ReturnType<typeof useTheme>;
   depth?: number;
 }
 
@@ -131,16 +375,37 @@ function ReferralNode({ node, theme, depth = 0 }: ReferralNodeProps) {
   const [loading, setLoading] = useState(false);
   const t = useT();
 
+  const rotation = useSharedValue(0);
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
   const hasChildren = node.children_count > 0;
 
+  // Depth colour: gold → white → muted
+  const depthColor =
+    depth === 0
+      ? theme.gold.primary
+      : depth === 1
+      ? theme.colors.foreground
+      : theme.colors.mutedForeground;
+
   const toggle = async () => {
+    LayoutAnimation.configureNext(EXPAND_ANIMATION);
+
     if (!expanded && children === null) {
       setLoading(true);
       const res = await treeService.getReferralChildren(node.id);
       setChildren('error' in res ? [] : res.items);
       setLoading(false);
     }
-    setExpanded((v) => !v);
+
+    const next = !expanded;
+    rotation.value = withTiming(next ? 90 : 0, {
+      duration: 200,
+      easing: Easing.out(Easing.quad),
+    });
+    setExpanded(next);
   };
 
   return (
@@ -152,21 +417,40 @@ function ReferralNode({ node, theme, depth = 0 }: ReferralNodeProps) {
           styles.referralRow,
           {
             paddingVertical: theme.spacing[2],
-            paddingHorizontal: depth > 1 ? theme.spacing[1] : theme.spacing[3],
+            paddingHorizontal: theme.spacing[3],
             borderRadius: theme.borderRadius.xl,
+            minHeight: 44,
           },
         ]}
       >
+        {/* Depth colour strip */}
+        <View
+          style={{
+            width: 3,
+            height: 26,
+            borderRadius: 2,
+            backgroundColor: depthColor,
+            opacity: 0.55,
+            marginRight: 4,
+            flexShrink: 0,
+          }}
+        />
+
         {/* Chevron / spinner */}
         <View style={[styles.chevronWrap, { opacity: hasChildren ? 1 : 0.2 }]}>
           {loading ? (
             <ActivityIndicator size="small" color={theme.colors.goldForeground} />
           ) : (
-            <ChevronRight
-              size={16}
-              color={hasChildren ? theme.colors.goldForeground : theme.colors.mutedForeground}
-              style={{ transform: [{ rotate: expanded ? '90deg' : '0deg' }] }}
-            />
+            <Animated.View style={chevronStyle}>
+              <ChevronRight
+                size={16}
+                color={
+                  hasChildren
+                    ? theme.colors.goldForeground
+                    : theme.colors.mutedForeground
+                }
+              />
+            </Animated.View>
           )}
         </View>
 
@@ -175,9 +459,10 @@ function ReferralNode({ node, theme, depth = 0 }: ReferralNodeProps) {
           style={[
             styles.avatar,
             {
-              backgroundColor: depth === 0
-                ? `${theme.gold.primary}25`
-                : theme.colors.muted,
+              backgroundColor:
+                depth === 0
+                  ? `${theme.gold.primary}25`
+                  : theme.colors.muted,
               borderRadius: theme.borderRadius.full,
             },
           ]}
@@ -186,7 +471,10 @@ function ReferralNode({ node, theme, depth = 0 }: ReferralNodeProps) {
             style={{
               fontFamily: theme.fonts.bold,
               fontSize: 12,
-              color: depth === 0 ? theme.colors.goldForeground : theme.colors.mutedForeground,
+              color:
+                depth === 0
+                  ? theme.colors.goldForeground
+                  : theme.colors.mutedForeground,
             }}
           >
             {(node.login || node.fio || '?').charAt(0).toUpperCase()}
@@ -216,15 +504,16 @@ function ReferralNode({ node, theme, depth = 0 }: ReferralNodeProps) {
           </Text>
         </View>
 
-        {/* Badges — hide type badge on deep levels to save horizontal space */}
+        {/* Badges */}
         <View style={styles.badges}>
           {node.rang > 0 && <RankBadge rank={node.rang} size="sm" />}
           {depth < 2 && (
             <View
               style={{
-                backgroundColor: node.type === 1
-                  ? `${theme.semantic.success}20`
-                  : theme.colors.muted,
+                backgroundColor:
+                  node.type === 1
+                    ? `${theme.semantic.success}20`
+                    : theme.colors.muted,
                 paddingHorizontal: theme.spacing[2],
                 paddingVertical: 2,
                 borderRadius: theme.borderRadius.full,
@@ -234,7 +523,10 @@ function ReferralNode({ node, theme, depth = 0 }: ReferralNodeProps) {
                 style={{
                   fontFamily: theme.fonts.medium,
                   fontSize: 10,
-                  color: node.type === 1 ? theme.semantic.success : theme.colors.mutedForeground,
+                  color:
+                    node.type === 1
+                      ? theme.semantic.success
+                      : theme.colors.mutedForeground,
                 }}
               >
                 {node.type === 1 ? t.structure.leader : t.structure.client}
@@ -268,10 +560,10 @@ function ReferralNode({ node, theme, depth = 0 }: ReferralNodeProps) {
       {expanded && children !== null && (
         <View
           style={{
-            marginLeft: 14,
-            borderLeftWidth: 1,
-            borderLeftColor: `${theme.colors.border}80`,
-            paddingLeft: theme.spacing[1],
+            paddingLeft: 20,
+            marginLeft: 16,
+            borderLeftWidth: 1.5,
+            borderLeftColor: `${depthColor}35`,
           }}
         >
           {children.length === 0 ? (
@@ -288,7 +580,12 @@ function ReferralNode({ node, theme, depth = 0 }: ReferralNodeProps) {
             </Text>
           ) : (
             children.map((child) => (
-              <ReferralNode key={child.id} node={child} theme={theme} depth={depth + 1} />
+              <ReferralNode
+                key={child.id}
+                node={child}
+                theme={theme}
+                depth={depth + 1}
+              />
             ))
           )}
         </View>
@@ -297,12 +594,140 @@ function ReferralNode({ node, theme, depth = 0 }: ReferralNodeProps) {
   );
 }
 
-// ─── Screen ──────────────────────────────────────────────────────────────────
+// ─── Balance bar ──────────────────────────────────────────────────────────────
+
+interface BalanceBarProps {
+  leftVol: number;
+  rightVol: number;
+  theme: ReturnType<typeof useTheme>;
+}
+
+function BalanceBar({ leftVol, rightVol, theme }: BalanceBarProps) {
+  const t = useT();
+  const total = leftVol + rightVol;
+  const leftPct = total > 0 ? leftVol / total : 0.5;
+  const weakIsLeft = leftVol <= rightVol;
+
+  const formatVol = (v: number) => {
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+    if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
+    return String(v);
+  };
+
+  return (
+    <View
+      style={{
+        backgroundColor: theme.colors.card,
+        borderRadius: theme.borderRadius.xl,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: theme.colors.border,
+        padding: 14,
+        marginBottom: theme.spacing[4],
+        gap: 10,
+      }}
+    >
+      {/* Header */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            backgroundColor: `${theme.gold.primary}18`,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <GitBranch size={14} color={theme.colors.goldForeground} />
+        </View>
+        <Text
+          style={{
+            fontFamily: theme.fonts.medium,
+            fontSize: theme.fontSizes.sm,
+            color: theme.colors.foreground,
+          }}
+        >
+          {t.structure.balance}
+        </Text>
+      </View>
+
+      {/* Values */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View>
+          <Text
+            style={{
+              fontFamily: theme.fonts.regular,
+              fontSize: 10,
+              color: theme.colors.mutedForeground,
+              marginBottom: 2,
+            }}
+          >
+            {t.structure.leftVol}
+          </Text>
+          <Text
+            style={{
+              fontFamily: theme.fonts.bold,
+              fontSize: theme.fontSizes.base,
+              color: weakIsLeft ? theme.colors.mutedForeground : theme.colors.goldForeground,
+            }}
+          >
+            {formatVol(leftVol)} QV
+          </Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text
+            style={{
+              fontFamily: theme.fonts.regular,
+              fontSize: 10,
+              color: theme.colors.mutedForeground,
+              marginBottom: 2,
+            }}
+          >
+            {t.structure.rightVol}
+          </Text>
+          <Text
+            style={{
+              fontFamily: theme.fonts.bold,
+              fontSize: theme.fontSizes.base,
+              color: !weakIsLeft ? theme.colors.mutedForeground : theme.colors.goldForeground,
+            }}
+          >
+            {formatVol(rightVol)} QV
+          </Text>
+        </View>
+      </View>
+
+      {/* Bar */}
+      <View
+        style={{
+          height: 6,
+          borderRadius: 3,
+          backgroundColor: theme.colors.muted,
+          overflow: 'hidden',
+          flexDirection: 'row',
+        }}
+      >
+        <View
+          style={{
+            width: `${leftPct * 100}%`,
+            backgroundColor: weakIsLeft
+              ? theme.colors.mutedForeground
+              : theme.gold.primary,
+            borderRadius: 3,
+          }}
+        />
+      </View>
+    </View>
+  );
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function StructureScreen() {
   const theme = useTheme();
   const t = useT();
   const { user } = useAuthStore();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('tree');
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['root']));
@@ -332,8 +757,7 @@ export function StructureScreen() {
       } else {
         setRootChildren([]);
       }
-    } catch (error) {
-      console.error('Error fetching structure data:', error);
+    } catch {
       setRootChildren([]);
     } finally {
       setLoading(false);
@@ -352,26 +776,30 @@ export function StructureScreen() {
   }, [fetchData]);
 
   const toggleExpanded = (id: string) => {
-    const newExpanded = new Set(expanded);
-    if (newExpanded.has(id)) newExpanded.delete(id);
-    else newExpanded.add(id);
-    setExpanded(newExpanded);
+    const next = new Set(expanded);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setExpanded(next);
   };
 
-  const formatVolume = (volume: number) => {
-    if (volume >= 1000000) return `${(volume / 1000000).toFixed(1)}M`;
-    if (volume >= 1000) return `${(volume / 1000).toFixed(0)}K`;
-    return volume.toString();
+  const formatVolume = (v: number) => {
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+    if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
+    return String(v);
   };
 
   const totalPartners = volumeData?.total_members ?? 0;
   const totalVolume = volumeData?.total_volume ?? 0;
+  const leftVolume = volumeData?.left_volume ?? 0;
+  const rightVolume = volumeData?.right_volume ?? 0;
 
-  // Filter for search — flat search over loaded tree snapshot
   const filteredChildren = searchQuery.trim()
     ? (rootChildren ?? []).filter((item) => {
         const q = searchQuery.toLowerCase();
-        return (item.fio || '').toLowerCase().includes(q) || (item.login || '').toLowerCase().includes(q);
+        return (
+          (item.fio || '').toLowerCase().includes(q) ||
+          (item.login || '').toLowerCase().includes(q)
+        );
       })
     : rootChildren;
 
@@ -380,16 +808,22 @@ export function StructureScreen() {
       scrollable
       padded={false}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.gold.primary} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={theme.gold.primary}
+        />
       }
     >
       <View style={{ paddingHorizontal: theme.screenPadding.horizontal }}>
+        {/* Title */}
         <Text
           style={{
             fontFamily: theme.fonts.displayBold,
             fontSize: theme.fontSizes['2xl'],
             color: theme.colors.foreground,
             marginBottom: theme.spacing[4],
+            paddingTop: theme.spacing[2],
           }}
         >
           {t.structure.title}
@@ -404,33 +838,32 @@ export function StructureScreen() {
           containerStyle={{ marginBottom: theme.spacing[4] }}
         />
 
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <GradientCard style={{ flex: 1, marginRight: theme.spacing[2] }}>
-            <View style={styles.statContent}>
-              <Users size={18} color={theme.colors.goldForeground} />
-              <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginLeft: theme.spacing[2] }}>
-                {t.structure.totalPartners}
-              </Text>
-            </View>
-            <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes['2xl'], color: theme.colors.foreground, marginTop: theme.spacing[2] }}>
-              {totalPartners}
-            </Text>
-          </GradientCard>
-
-          <GradientCard style={{ flex: 1, marginLeft: theme.spacing[2] }}>
-            <View style={styles.statContent}>
-              <TrendingUp size={18} color={theme.semantic.success} />
-              <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginLeft: theme.spacing[2] }}>
-                {t.structure.totalVolume}
-              </Text>
-            </View>
-            <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes['2xl'], color: theme.colors.foreground, marginTop: theme.spacing[2] }}>
-              {formatVolume(totalVolume)}
-            </Text>
-            <Text style={{ fontFamily: theme.fonts.regular, fontSize: 10, color: theme.colors.mutedForeground }}>QV</Text>
-          </GradientCard>
+        {/* Stats row */}
+        <View
+          style={{ flexDirection: 'row', gap: 12, marginBottom: theme.spacing[3] }}
+        >
+          <MiniStatCard
+            icon={<Users size={16} color={theme.colors.goldForeground} />}
+            label={t.structure.totalPartners}
+            value={String(totalPartners)}
+            iconBg={`${theme.gold.primary}18`}
+          />
+          <MiniStatCard
+            icon={<TrendingUp size={16} color={theme.semantic.success} />}
+            label={t.structure.totalVolume}
+            value={`${formatVolume(totalVolume)} QV`}
+            iconBg={`${theme.semantic.success}18`}
+          />
         </View>
+
+        {/* Balance bar — only when we have volume data */}
+        {volumeData && (leftVolume > 0 || rightVolume > 0) && (
+          <BalanceBar
+            leftVol={leftVolume}
+            rightVol={rightVolume}
+            theme={theme}
+          />
+        )}
 
         {/* Tabs */}
         <Tabs
@@ -440,31 +873,34 @@ export function StructureScreen() {
           ]}
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          style={{ marginVertical: theme.spacing[4] }}
+          style={{ marginBottom: theme.spacing[4] }}
         />
 
         {/* Content */}
         {loading ? (
-          <View style={{ alignItems: 'center', padding: 40 }}>
-            <ActivityIndicator size="large" color={theme.colors.goldForeground} />
-            <Text style={{ marginTop: 12, color: theme.colors.mutedForeground }}>{t.structure.loading}</Text>
-          </View>
+          <StructureSkeleton theme={theme} />
         ) : activeTab === 'tree' ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingVertical: theme.spacing[4] }}
-          >
+          // ── Binary tree ───────────────────────────────────────────────────────
+          <View style={{ marginBottom: theme.spacing[6] }}>
             {treeData ? (
-              <TreeNodeComponent node={treeData} theme={theme} expanded={expanded} toggleExpanded={toggleExpanded} />
+              <ZoomableTree>
+                <TreeNodeComponent
+                  node={treeData}
+                  theme={theme}
+                  expanded={expanded}
+                  toggleExpanded={toggleExpanded}
+                />
+              </ZoomableTree>
             ) : (
-              <View style={{ padding: 20 }}>
-                <Text style={{ color: theme.colors.mutedForeground }}>{t.structure.noData}</Text>
+              <View style={{ padding: 40, alignItems: 'center' }}>
+                <Text style={{ color: theme.colors.mutedForeground }}>
+                  {t.structure.noData}
+                </Text>
               </View>
             )}
-          </ScrollView>
+          </View>
         ) : (
-          // Linear tab — same approach as fenix-web
+          // ── Linear / referral ─────────────────────────────────────────────────
           <View
             style={{
               borderWidth: 1,
@@ -495,48 +931,111 @@ export function StructureScreen() {
                   backgroundColor: `${theme.gold.primary}25`,
                   alignItems: 'center',
                   justifyContent: 'center',
+                  borderWidth: 1.5,
+                  borderColor: `${theme.gold.primary}60`,
                 }}
               >
-                <Text style={{ fontFamily: theme.fonts.bold, fontSize: 14, color: theme.colors.goldForeground }}>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.bold,
+                    fontSize: 14,
+                    color: theme.colors.goldForeground,
+                  }}
+                >
                   {(user?.login || user?.name || '?').charAt(0).toUpperCase()}
                 </Text>
               </View>
+
               <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing[2] }}>
-                  <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: theme.spacing[2],
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: theme.fonts.bold,
+                      fontSize: theme.fontSizes.sm,
+                      color: theme.colors.foreground,
+                    }}
+                  >
                     {user?.name || user?.login}
                   </Text>
-                  <View style={{ backgroundColor: `${theme.gold.primary}25`, paddingHorizontal: theme.spacing[2], paddingVertical: 2, borderRadius: theme.borderRadius.full }}>
-                    <Text style={{ fontFamily: theme.fonts.medium, fontSize: 10, color: theme.colors.goldForeground }}>Вы</Text>
+                  <View
+                    style={{
+                      backgroundColor: `${theme.gold.primary}25`,
+                      paddingHorizontal: theme.spacing[2],
+                      paddingVertical: 2,
+                      borderRadius: theme.borderRadius.full,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: theme.fonts.medium,
+                        fontSize: 10,
+                        color: theme.colors.goldForeground,
+                      }}
+                    >
+                      {t.structure.you}
+                    </Text>
                   </View>
                 </View>
-                <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground }}>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.regular,
+                    fontSize: theme.fontSizes.xs,
+                    color: theme.colors.mutedForeground,
+                  }}
+                >
                   #{user?.login}
                 </Text>
               </View>
+
               {filteredChildren !== null && (
-                <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground }}>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.regular,
+                    fontSize: theme.fontSizes.xs,
+                    color: theme.colors.mutedForeground,
+                  }}
+                >
                   {filteredChildren.length} {t.structure.partners}
                 </Text>
               )}
             </View>
 
-            {/* Tree */}
+            {/* Tree list */}
             <View style={{ padding: theme.spacing[2] }}>
               {filteredChildren === null ? (
-                <View style={{ alignItems: 'center', padding: 40 }}>
-                  <ActivityIndicator size="large" color={theme.colors.goldForeground} />
-                </View>
+                <StructureSkeleton theme={theme} />
               ) : filteredChildren.length === 0 ? (
                 <View style={{ alignItems: 'center', paddingVertical: 48 }}>
-                  <Users size={32} color={theme.colors.mutedForeground} style={{ opacity: 0.3 }} />
-                  <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, marginTop: theme.spacing[2] }}>
+                  <Users
+                    size={32}
+                    color={theme.colors.mutedForeground}
+                    style={{ opacity: 0.3 }}
+                  />
+                  <Text
+                    style={{
+                      fontFamily: theme.fonts.regular,
+                      fontSize: theme.fontSizes.sm,
+                      color: theme.colors.mutedForeground,
+                      marginTop: theme.spacing[2],
+                    }}
+                  >
                     {t.structure.noPartners}
                   </Text>
                 </View>
               ) : (
                 filteredChildren.map((child) => (
-                  <ReferralNode key={child.id} node={child} theme={theme} depth={0} />
+                  <ReferralNode
+                    key={child.id}
+                    node={child}
+                    theme={theme}
+                    depth={0}
+                  />
                 ))
               )}
             </View>
@@ -548,17 +1047,15 @@ export function StructureScreen() {
 }
 
 const styles = StyleSheet.create({
-  statsRow: { flexDirection: 'row' },
-  statContent: { flexDirection: 'row', alignItems: 'center' },
   treeNodeContainer: { alignItems: 'center' },
   treeNode: { alignItems: 'center' },
-  connectorLine: { width: 2, height: 16, marginVertical: 4 },
+  connectorVertical: { width: 2, height: 16, marginVertical: 4 },
   childrenContainer: { alignItems: 'center' },
   childrenRow: { flexDirection: 'row', gap: 32 },
   emptyNode: {
     width: 80,
     height: 80,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
@@ -587,5 +1084,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     flexShrink: 0,
+  },
+  zoomContainer: {
+    minHeight: 280,
+    overflow: 'hidden',
+    borderRadius: 16,
   },
 });

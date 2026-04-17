@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { ArrowLeft, Search, Send, Wallet } from 'lucide-react-native';
+import { Search, Send, Wallet } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { GradientCard, GlassInput, GoldButton, Avatar, RankBadge } from '@/components/ui';
+import { CompactHeader, GradientCard, GlassInput, GoldButton, Avatar, RankBadge } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { authService, financeService } from '@/api';
 import { useT } from '@/i18n';
@@ -96,158 +96,47 @@ export function TransferScreen({ onBack }: TransferScreenProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: 60,
-            paddingHorizontal: theme.screenPadding.horizontal,
-            paddingBottom: theme.spacing[4],
-          },
-        ]}
-      >
-        <TouchableOpacity
-          onPress={onBack}
-          style={[
-            styles.backButton,
-            {
-              backgroundColor: theme.colors.card,
-              borderRadius: theme.borderRadius.full,
-              padding: theme.spacing[2],
-            },
-          ]}
-        >
-          <ArrowLeft size={24} color={theme.colors.foreground} />
-        </TouchableOpacity>
-        <Text
-          style={[
-            {
-              fontFamily: theme.fonts.displayBold,
-              fontSize: theme.fontSizes.xl,
-              color: theme.colors.foreground,
-              flex: 1,
-              textAlign: 'center',
-            },
-          ]}
-        >
-          {t.finance.transfer}
-        </Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <CompactHeader
+        onBack={onBack}
+        title={t.finance.transfer}
+        paddingBottom={theme.spacing[4]}
+        right={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: `${theme.gold.primary}12`, borderRadius: 99 }}>
+            <Wallet size={13} color={theme.colors.goldForeground} />
+            <Text style={{ fontFamily: theme.fonts.bold, fontSize: 13, color: theme.colors.goldForeground }}>
+              {(user?.balance || 0).toLocaleString('ru-KZ')} ₸
+            </Text>
+          </View>
+        }
+      />
 
       <View style={{ paddingHorizontal: theme.screenPadding.horizontal }}>
-        {/* Balance Info */}
-        <GradientCard variant="gold" style={{ marginBottom: theme.spacing[6] }}>
-          <View style={styles.balanceRow}>
-            <Wallet size={24} color={theme.colors.goldForeground} />
-            <View style={{ marginLeft: theme.spacing[3] }}>
-              <Text
-                style={[
-                  {
-                    fontFamily: theme.fonts.regular,
-                    fontSize: theme.fontSizes.sm,
-                    color: theme.colors.mutedForeground,
-                  },
-                ]}
-              >
-                {t.finance.availableForTransfer}
-              </Text>
-              <Text
-                style={[
-                  {
-                    fontFamily: theme.fonts.bold,
-                    fontSize: theme.fontSizes['2xl'],
-                    color: theme.colors.foreground,
-                  },
-                ]}
-              >
-                {(user?.balance || 0).toLocaleString('ru-KZ')} ₸
-              </Text>
-            </View>
-          </View>
-        </GradientCard>
 
         {/* Recipient Search */}
         <GradientCard style={{ marginBottom: theme.spacing[4] }}>
-          <Text
-            style={[
-              {
-                fontFamily: theme.fonts.semibold,
-                fontSize: theme.fontSizes.md,
-                color: theme.colors.foreground,
-                marginBottom: theme.spacing[3],
-              },
-            ]}
-          >
+          <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, marginBottom: theme.spacing[3] }}>
             {t.finance.recipient}
           </Text>
-
-          <View style={styles.searchRow}>
-            <View style={{ flex: 1, marginRight: theme.spacing[2] }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+            <View style={{ flex: 1 }}>
               <GlassInput
                 placeholder={t.finance.recipientIdPlaceholder}
                 value={recipientId}
-                onChangeText={(text) => {
-                  setRecipientId(text);
-                  setRecipientInfo(null);
-                }}
+                onChangeText={(text) => { setRecipientId(text); setRecipientInfo(null); }}
                 leftIcon={<Search size={18} color={theme.colors.mutedForeground} />}
               />
             </View>
-            <GoldButton
-              title={t.finance.find}
-              onPress={handleSearchRecipient}
-              loading={searching}
-              size="md"
-              fullWidth={false}
-              style={{ width: 100 }}
-            />
+            <GoldButton title={t.finance.find} onPress={handleSearchRecipient} loading={searching} size="md" fullWidth={false} style={{ width: 90 }} />
           </View>
 
           {recipientInfo && (
-            <View
-              style={[
-                styles.recipientCard,
-                {
-                  backgroundColor: `${theme.semantic.success}10`,
-                  borderRadius: theme.borderRadius.lg,
-                  borderWidth: 1,
-                  borderColor: `${theme.semantic.success}30`,
-                  padding: theme.spacing[3],
-                  marginTop: theme.spacing[3],
-                },
-              ]}
-            >
-              <View style={styles.recipientInfo}>
-                <Avatar name={recipientInfo.name} size="sm" showBorder={false} />
-                <View style={{ marginLeft: theme.spacing[3] }}>
-                  <Text
-                    style={[
-                      {
-                        fontFamily: theme.fonts.semibold,
-                        fontSize: theme.fontSizes.sm,
-                        color: theme.colors.foreground,
-                      },
-                    ]}
-                  >
-                    {recipientInfo.name}
-                  </Text>
-                  <View style={styles.recipientMeta}>
-                    <RankBadge rank={recipientInfo.rank} size="sm" />
-                    <Text
-                      style={[
-                        {
-                          fontFamily: theme.fonts.regular,
-                          fontSize: theme.fontSizes.xs,
-                          color: theme.colors.mutedForeground,
-                          marginLeft: theme.spacing[2],
-                        },
-                      ]}
-                    >
-                      {recipientId}
-                    </Text>
-                  </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: `${theme.semantic.success}10`, borderRadius: 12, borderWidth: 1, borderColor: `${theme.semantic.success}30`, padding: 12, marginTop: 12 }}>
+              <Avatar name={recipientInfo.name} size="sm" showBorder={false} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>{recipientInfo.name}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 3, gap: 8 }}>
+                  <RankBadge rank={recipientInfo.rank} size="sm" />
+                  <Text style={{ fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground }}>{recipientId}</Text>
                 </View>
               </View>
             </View>
@@ -256,19 +145,9 @@ export function TransferScreen({ onBack }: TransferScreenProps) {
 
         {/* Amount */}
         <GradientCard>
-          <Text
-            style={[
-              {
-                fontFamily: theme.fonts.semibold,
-                fontSize: theme.fontSizes.md,
-                color: theme.colors.foreground,
-                marginBottom: theme.spacing[3],
-              },
-            ]}
-          >
+          <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, marginBottom: theme.spacing[3] }}>
             {t.finance.amount}
           </Text>
-
           <GlassInput
             placeholder="0"
             value={amount}
@@ -276,33 +155,9 @@ export function TransferScreen({ onBack }: TransferScreenProps) {
             keyboardType="numeric"
             leftIcon={<Text style={{ color: theme.colors.mutedForeground }}>₸</Text>}
           />
-
-          <View
-            style={[
-              styles.feeInfo,
-              {
-                backgroundColor: theme.colors.muted,
-                borderRadius: theme.borderRadius.lg,
-                padding: theme.spacing[3],
-                marginTop: theme.spacing[4],
-              },
-            ]}
-          >
-            <Text
-              style={[
-                {
-                  fontFamily: theme.fonts.regular,
-                  fontSize: theme.fontSizes.xs,
-                  color: theme.colors.mutedForeground,
-                },
-              ]}
-            >
-              {t.finance.commission}: 0%{'\n'}
-              {t.finance.minAmount}: 1,000 ₸{'\n'}
-              {t.finance.instantTransfer}
-            </Text>
-          </View>
-
+          <Text style={{ fontFamily: theme.fonts.regular, fontSize: 11, color: theme.colors.mutedForeground, marginTop: 8 }}>
+            {t.finance.commission}: 0% · {t.finance.minAmount}: 1,000 ₸ · {t.finance.instantTransfer}
+          </Text>
           <GoldButton
             title={t.finance.send}
             onPress={handleTransfer}

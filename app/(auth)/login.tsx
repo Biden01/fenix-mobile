@@ -35,7 +35,6 @@ export default function LoginRoute() {
 
   return (
     <LoginScreen
-      onRegister={() => router.push('/(auth)/register')}
       onForgotPassword={handleForgotPassword}
     />
   );

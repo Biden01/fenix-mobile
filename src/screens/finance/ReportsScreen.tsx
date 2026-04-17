@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
-import { ArrowLeft, Users, Gift, Percent, Zap, Clock, ArrowDownCircle } from 'lucide-react-native';
+import { Users, Gift, Percent, Zap, Clock, ArrowDownCircle } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/theme';
-import { GradientCard, GlassCard, StatusBadge, GlassSegmentedPicker, GlassButton } from '@/components/ui';
+import { CompactHeader, GradientCard, GlassSegmentedPicker } from '@/components/ui';
 import { financeService, TransferHistoryItem, BinaryBonusItem, BbsItem, PassiveHistoryItem, UplineItem } from '@/api';
 import { useT } from '@/i18n';
 
@@ -239,7 +239,7 @@ export function ReportsScreen({ onBack, hideHeader, isModal }: ReportsScreenProp
     setRefreshing(false);
   }, [resetAll]);
 
-  // "Load More" per tab
+  // Infinite scroll — called when end reached
   const handleLoadMore = useCallback(() => {
     if (activeTab === 'referral' || activeTab === 'cashback') {
       if (!transfers.hasMore || transfers.loading) return;
@@ -290,131 +290,40 @@ export function ReportsScreen({ onBack, hideHeader, isModal }: ReportsScreenProp
   // Render helpers
   // ——————————————————————————————————————————
 
-  const renderReferralItem = ({ item }: { item: ReferralItem }) => (
-    <GradientCard style={{ marginBottom: theme.spacing[2] }} padding={theme.spacing[3]}>
-      <View style={styles.reportRow}>
-        <View style={[styles.reportIcon, { backgroundColor: `${theme.semantic.success}20`, borderRadius: theme.borderRadius.full, padding: theme.spacing[2] }]}>
-          <Users size={20} color={theme.semantic.success} />
-        </View>
-        <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
-          <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>{item.from}</Text>
-          <View style={styles.reportMeta}>
-            <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground }}>
-              {new Date(item.date).toLocaleDateString('ru-RU')}
-            </Text>
-            <StatusBadge label={`${item.level} ${t.reports.line}`} variant="gold" size="sm" style={{ marginLeft: theme.spacing[2] }} />
-          </View>
-        </View>
-        <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: theme.semantic.success }}>
-          +{item.amount.toLocaleString('ru-KZ')} ₸
-        </Text>
+  const renderRow = (iconEl: React.ReactNode, title: string, subtitle: string, amount: string, amountColor: string) => (
+    <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14 }}>
+      {iconEl}
+      <View style={{ flex: 1, marginLeft: 12 }}>
+        <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }} numberOfLines={1}>{title}</Text>
+        <Text style={{ fontSize: 11, color: theme.colors.mutedForeground, marginTop: 2 }}>{subtitle}</Text>
       </View>
-    </GradientCard>
+      <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: amountColor }}>+{amount} ₸</Text>
+    </View>
   );
 
-  const renderBinaryItem = ({ item }: { item: BinaryItem }) => (
-    <GradientCard style={{ marginBottom: theme.spacing[2] }} padding={theme.spacing[3]}>
-      <View style={styles.reportRow}>
-        <View style={[styles.reportIcon, { backgroundColor: `${theme.semantic.info}20`, borderRadius: theme.borderRadius.full, padding: theme.spacing[2] }]}>
-          <Gift size={20} color={theme.semantic.info} />
-        </View>
-        <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
-          <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>{t.reports.binaryBonus}</Text>
-          <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>
-            {new Date(item.date).toLocaleDateString('ru-RU')}
-          </Text>
-          <Text style={{ fontFamily: theme.fonts.regular, fontSize: 10, color: theme.colors.mutedForeground, marginTop: theme.spacing[1] }}>
-            {t.reports.leftLeg}: {item.leftQV.toLocaleString('ru-KZ')} QV · {t.reports.rightLeg}: {item.rightQV.toLocaleString('ru-KZ')} QV
-          </Text>
-        </View>
-        <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: theme.semantic.info }}>
-          +{item.amount.toLocaleString('ru-KZ')} ₸
-        </Text>
-      </View>
-    </GradientCard>
+  const iconWrap = (color: string, Icon: any) => (
+    <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: `${color}18`, alignItems: 'center', justifyContent: 'center' }}>
+      <Icon size={18} color={color} />
+    </View>
   );
 
-  const renderCashbackItem = ({ item }: { item: CashbackItem }) => (
-    <GradientCard style={{ marginBottom: theme.spacing[2] }} padding={theme.spacing[3]}>
-      <View style={styles.reportRow}>
-        <View style={[styles.reportIcon, { backgroundColor: `${theme.semantic.warning}20`, borderRadius: theme.borderRadius.full, padding: theme.spacing[2] }]}>
-          <Percent size={20} color={theme.semantic.warning} />
-        </View>
-        <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
-          <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>{item.source || t.reports.cashback}</Text>
-          <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>
-            {new Date(item.date).toLocaleDateString('ru-RU')}
-          </Text>
-        </View>
-        <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: theme.semantic.warning }}>
-          +{item.amount.toLocaleString('ru-KZ')} ₸
-        </Text>
-      </View>
-    </GradientCard>
-  );
+  const renderReferralItem = ({ item }: { item: ReferralItem }) =>
+    renderRow(iconWrap(theme.semantic.success, Users), item.from, `${new Date(item.date).toLocaleDateString('ru-RU')} · ${t.reports.line} ${item.level}`, item.amount.toLocaleString('ru-KZ'), theme.semantic.success);
 
-  const renderBbsItem = ({ item }: { item: BbsItem }) => (
-    <GradientCard style={{ marginBottom: theme.spacing[2] }} padding={theme.spacing[3]}>
-      <View style={styles.reportRow}>
-        <View style={[styles.reportIcon, { backgroundColor: `${theme.gold.primary}20`, borderRadius: theme.borderRadius.full, padding: theme.spacing[2] }]}>
-          <Zap size={20} color={theme.colors.goldForeground} />
-        </View>
-        <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
-          <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>
-            {t.reports.bbsBonus} · {item.partners} {t.reports.partnersAbbr}
-          </Text>
-          <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>
-            {new Date(item.post_time).toLocaleDateString('ru-RU')}
-          </Text>
-        </View>
-        <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: theme.colors.goldForeground }}>
-          +{item.amount.toLocaleString('ru-KZ')} ₸
-        </Text>
-      </View>
-    </GradientCard>
-  );
+  const renderBinaryItem = ({ item }: { item: BinaryItem }) =>
+    renderRow(iconWrap(theme.semantic.info, Gift), t.reports.binaryBonus, `${new Date(item.date).toLocaleDateString('ru-RU')} · L: ${item.leftQV.toLocaleString('ru-KZ')} R: ${item.rightQV.toLocaleString('ru-KZ')} QV`, item.amount.toLocaleString('ru-KZ'), theme.semantic.info);
 
-  const renderPassiveItem = ({ item }: { item: PassiveHistoryItem }) => (
-    <GradientCard style={{ marginBottom: theme.spacing[2] }} padding={theme.spacing[3]}>
-      <View style={styles.reportRow}>
-        <View style={[styles.reportIcon, { backgroundColor: `${theme.semantic.success}20`, borderRadius: theme.borderRadius.full, padding: theme.spacing[2] }]}>
-          <Clock size={20} color={theme.semantic.success} />
-        </View>
-        <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
-          <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>
-            {t.reports.passiveCashbackMonth} {item.month_no}
-          </Text>
-          <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>
-            {new Date(item.paid_at).toLocaleDateString('ru-RU')}
-          </Text>
-        </View>
-        <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: theme.semantic.success }}>
-          +{item.amount.toLocaleString('ru-KZ')} ₸
-        </Text>
-      </View>
-    </GradientCard>
-  );
+  const renderCashbackItem = ({ item }: { item: CashbackItem }) =>
+    renderRow(iconWrap(theme.semantic.warning, Percent), item.source || t.reports.cashback, new Date(item.date).toLocaleDateString('ru-RU'), item.amount.toLocaleString('ru-KZ'), theme.semantic.warning);
 
-  const renderUplineItem = ({ item }: { item: UplineItem }) => (
-    <GradientCard style={{ marginBottom: theme.spacing[2] }} padding={theme.spacing[3]}>
-      <View style={styles.reportRow}>
-        <View style={[styles.reportIcon, { backgroundColor: `${theme.gold.primary}20`, borderRadius: theme.borderRadius.full, padding: theme.spacing[2] }]}>
-          <ArrowDownCircle size={20} color={theme.colors.goldForeground} />
-        </View>
-        <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
-          <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.sm, color: theme.colors.foreground }}>
-            {item.sender_login || `ID ${item.sender_id}`}
-          </Text>
-          <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>
-            {item.sender_fio ? `${item.sender_fio} · ` : ''}{new Date(item.post_time).toLocaleDateString('ru-RU')}
-          </Text>
-        </View>
-        <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: theme.colors.goldForeground }}>
-          +{item.amount.toLocaleString('ru-KZ')} ₸
-        </Text>
-      </View>
-    </GradientCard>
-  );
+  const renderBbsItem = ({ item }: { item: BbsItem }) =>
+    renderRow(iconWrap(theme.colors.goldForeground, Zap), `${t.reports.bbsBonus} · ${item.partners} ${t.reports.partnersAbbr}`, new Date(item.post_time).toLocaleDateString('ru-RU'), item.amount.toLocaleString('ru-KZ'), theme.colors.goldForeground);
+
+  const renderPassiveItem = ({ item }: { item: PassiveHistoryItem }) =>
+    renderRow(iconWrap(theme.semantic.success, Clock), `${t.reports.passiveCashbackMonth} ${item.month_no}`, new Date(item.paid_at).toLocaleDateString('ru-RU'), item.amount.toLocaleString('ru-KZ'), theme.semantic.success);
+
+  const renderUplineItem = ({ item }: { item: UplineItem }) =>
+    renderRow(iconWrap(theme.colors.goldForeground, ArrowDownCircle), item.sender_login || `ID ${item.sender_id}`, `${item.sender_fio ? `${item.sender_fio} · ` : ''}${new Date(item.post_time).toLocaleDateString('ru-RU')}`, item.amount.toLocaleString('ru-KZ'), theme.colors.goldForeground);
 
   const getData = (): any[] => {
     switch (activeTab) {
@@ -452,20 +361,7 @@ export function ReportsScreen({ onBack, hideHeader, isModal }: ReportsScreenProp
           </TouchableOpacity>
         </View>
       ) : !hideHeader ? (
-        <View style={[styles.header, { paddingTop: 60, paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: theme.spacing[4] }]}>
-          <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
-            <GlassCard
-              cornerRadius={theme.borderRadius.full}
-              style={[styles.backButton, { padding: theme.spacing[2] }]}
-            >
-              <ArrowLeft size={24} color={theme.colors.foreground} />
-            </GlassCard>
-          </TouchableOpacity>
-          <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes.xl, color: theme.colors.foreground, flex: 1, textAlign: 'center' }}>
-            {t.reports.title}
-          </Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <CompactHeader onBack={onBack} title={t.reports.title} paddingBottom={theme.spacing[4]} />
       ) : null}
 
       <View style={{ paddingHorizontal: theme.screenPadding.horizontal, marginBottom: theme.spacing[4] }}>
@@ -487,37 +383,30 @@ export function ReportsScreen({ onBack, hideHeader, isModal }: ReportsScreenProp
       {isTabLoading ? (
         <View style={{ alignItems: 'center', padding: 40 }}>
           <ActivityIndicator size="large" color={theme.colors.goldForeground} />
-          <Text style={{ marginTop: 12, color: theme.colors.mutedForeground }}>{t.reports.loading}</Text>
         </View>
       ) : (
         <FlatList
           data={getData()}
           renderItem={getRenderItem()}
-          keyExtractor={(item: any) => item.id}
-          contentContainerStyle={{ paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: 40 }}
+          keyExtractor={(item: any) => item.id ?? item.post_time ?? Math.random().toString()}
+          contentContainerStyle={{ paddingHorizontal: theme.screenPadding.horizontal, paddingBottom: theme.dimensions.tabBarHeight + theme.spacing[4] }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.gold.primary} />}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
+          ItemSeparatorComponent={() => (
+            <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 66 }} />
+          )}
           ListEmptyComponent={
             <View style={{ alignItems: 'center', padding: 40 }}>
               <Text style={{ color: theme.colors.mutedForeground, fontFamily: theme.fonts.medium }}>{t.reports.noData}</Text>
             </View>
           }
-          ListFooterComponent={
-            currentInitialized() ? (
-              <View style={{ paddingVertical: 12, alignItems: 'center' }}>
-                {currentLoading() ? (
-                  <ActivityIndicator size="small" color={theme.colors.goldForeground} />
-                ) : currentHasMore() ? (
-                  <GlassButton
-                    label={t.reports.loadMore}
-                    icon="arrow.down.circle"
-                    tint="#FFD700"
-                    onPress={handleLoadMore}
-                  />
-                ) : null}
-              </View>
-            ) : null
-          }
+          ListFooterComponent={currentLoading() ? (
+            <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+              <ActivityIndicator size="small" color={theme.colors.goldForeground} />
+            </View>
+          ) : null}
         />
       )}
     </View>
@@ -526,8 +415,6 @@ export function ReportsScreen({ onBack, hideHeader, isModal }: ReportsScreenProp
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center' },
-  backButton: {},
   reportRow: { flexDirection: 'row', alignItems: 'center' },
   reportIcon: {},
   reportMeta: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },

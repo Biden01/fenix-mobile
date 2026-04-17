@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking, Alert } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Home, Users, ShoppingBag, Wallet, User, Shield, ExternalLink, LogOut } from 'lucide-react-native';
@@ -7,7 +6,6 @@ import { useTheme } from '@/theme';
 import { TabBar } from '@/components/ui/TabBar';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { NotificationPoller } from '@/components/NotificationPoller';
-import { registerForPushNotifications } from '@/services/pushService';
 import { useAuthStore } from '@/store';
 
 const WEB_CABINET_URL = 'https://fenixinternationalcompany.kz/cabinet/verification';
@@ -72,18 +70,18 @@ const styles = StyleSheet.create({
 
 export default function TabsLayout() {
   const t = useT();
-  const theme = useTheme();
   const { user } = useAuthStore();
-
-  useEffect(() => {
-    registerForPushNotifications();
-  }, []);
 
   // Block all tabs for unverified users (same as web CabinetLayout)
   const isAdmin = user?.id === 1;
   const isVerified = user?.verified === 1;
   if (user && !isAdmin && !isVerified) {
-    return <VerificationGate />;
+    return (
+      <>
+        <NotificationPoller />
+        <VerificationGate />
+      </>
+    );
   }
 
   return (

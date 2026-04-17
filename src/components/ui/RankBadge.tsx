@@ -21,7 +21,26 @@ const RANKS = [
   { id: 12, name: 'Gold Diamond',        color: '#F59E0B' },
 ] as const;
 
+// Icon color on badge background for each rank
+// gold ranks (5+) → dark text; silver/light-bg ranks (0,1,4) → dark; rest → white
+const ICON_COLOR_ON_BG: Record<number, string> = {
+  0:  '#444444',
+  1:  '#444444',
+  2:  '#FFFFFF',
+  3:  '#FFFFFF',
+  4:  '#444444',
+  5:  '#1A1000',
+  6:  '#1A1000',
+  7:  '#1A1000',
+  8:  '#1A1000',
+  9:  '#1A1000',
+  10: '#1A1000',
+  11: '#1A1000',
+  12: '#1A1000',
+};
+
 // Rank rewards, matching backend RANK_REWARDS
+// TODO: i18n — currently Russian-only
 export const RANK_REWARDS: Record<number, string> = {
   1:  '1 товар',
   2:  '3 товара',
@@ -58,8 +77,7 @@ export function RankBadge({ rank, size = 'md', showName = false, style }: RankBa
 
   const dims = getDimensions();
   const isGold = rank >= 5;
-
-  const iconColorOnBg = isGold ? '#1A1000' : (rank <= 1 || rank === 4 ? '#444444' : '#FFFFFF');
+  const iconColorOnBg = ICON_COLOR_ON_BG[rank] ?? '#FFFFFF';
 
   return (
     <View style={[styles.container, style]}>

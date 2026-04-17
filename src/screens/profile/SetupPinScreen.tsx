@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   top: { alignItems: 'center', marginBottom: 48 },
   dots: { flexDirection: 'row', gap: 16, marginBottom: 12 },
-  dot: { width: 16, height: 16, borderRadius: 8, borderWidth: 2 },
+  dot: { width: 22, height: 22, borderRadius: 11, borderWidth: 2 },
   pad: { gap: 14 },
   row: { flexDirection: 'row', gap: 18 },
   key: { width: 82, height: 82, alignItems: 'center', justifyContent: 'center', borderRadius: 41, overflow: 'hidden' },

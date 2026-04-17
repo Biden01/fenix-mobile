@@ -14,12 +14,14 @@ export function SplashScreen({ onAnimationComplete }: SplashScreenProps) {
   const scaleAnim = useRef(new Animated.Value(0.3)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const ringOpacity = useRef(new Animated.Value(0)).current;
+  const taglineOpacity = useRef(new Animated.Value(0)).current;
   const navigated = useRef(false);
 
   const navigate = useCallback(() => {
     if (!navigated.current && onAnimationComplete) {
       navigated.current = true;
-      onAnimationComplete();
+      setTimeout(onAnimationComplete, 0);
     }
   }, [onAnimationComplete]);
 
@@ -41,25 +43,27 @@ export function SplashScreen({ onAnimationComplete }: SplashScreenProps) {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Start pulse animation
+      // Gold ring glow
       Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.1,
-            duration: 1000,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 1000,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
+          Animated.timing(ringOpacity, { toValue: 0.35, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(ringOpacity, { toValue: 0, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
         ])
       ).start();
 
-      // Navigate after animation completes
+      // Tagline fade in after 500ms
+      setTimeout(() => {
+        Animated.timing(taglineOpacity, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+      }, 500);
+
+      // Start pulse animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.08, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ])
+      ).start();
+
       setTimeout(navigate, 1000);
     });
 
@@ -84,13 +88,21 @@ export function SplashScreen({ onAnimationComplete }: SplashScreenProps) {
         style={[
           styles.logoContainer,
           {
-            transform: [
-              { scale: Animated.multiply(scaleAnim, pulseAnim) },
-            ],
+            transform: [{ scale: Animated.multiply(scaleAnim, pulseAnim) }],
             opacity: opacityAnim,
           },
         ]}
       >
+        {/* Gold ring glow */}
+        <Animated.View style={{
+          position: 'absolute',
+          width: 148, height: 148,
+          borderRadius: 74,
+          borderWidth: 2,
+          borderColor: theme.gold.primary,
+          opacity: ringOpacity,
+          top: -14, left: -14,
+        }} />
         <Image
           source={require('../../../assets/fenix_fav.png')}
           style={styles.logoImage}
@@ -98,29 +110,13 @@ export function SplashScreen({ onAnimationComplete }: SplashScreenProps) {
         />
       </Animated.View>
 
-      <Animated.View style={{ opacity: opacityAnim }}>
-        <Text
-          style={[
-            styles.title,
-            {
-              fontFamily: theme.fonts.displayBold,
-              fontSize: theme.fontSizes['4xl'],
-              color: SPLASH_FG,
-            },
-          ]}
-        >
+      <Animated.View style={{ opacity: opacityAnim, alignItems: 'center' }}>
+        <Text style={[styles.title, { fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes['4xl'], color: SPLASH_FG }]}>
           Fenix
         </Text>
-        <Text
-          style={[
-            styles.subtitle,
-            {
-              fontFamily: theme.fonts.regular,
-              fontSize: theme.fontSizes.sm,
-              color: SPLASH_MUTED,
-            },
-          ]}
-        >
+      </Animated.View>
+      <Animated.View style={{ opacity: taglineOpacity }}>
+        <Text style={[styles.subtitle, { fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: SPLASH_MUTED }]}>
           International Company
         </Text>
       </Animated.View>

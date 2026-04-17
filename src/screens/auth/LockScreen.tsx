@@ -223,9 +223,9 @@ const styles = StyleSheet.create({
   top: { alignItems: 'center', marginBottom: 48 },
   dots: { flexDirection: 'row', gap: 16, marginBottom: 12 },
   dot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     borderWidth: 2,
   },
   pad: { gap: 14 },
