@@ -59,6 +59,20 @@ function withAllAppIconSizes(config) {
             scale: '1x',
             size: '1024x1024',
           },
+          {
+            filename: 'App-Icon-1024x1024@1x.png',
+            idiom: 'ios-marketing',
+            scale: '1x',
+            size: '1024x1024',
+            appearances: [{ appearance: 'luminosity', value: 'dark' }],
+          },
+          {
+            filename: 'App-Icon-1024x1024@1x.png',
+            idiom: 'ios-marketing',
+            scale: '1x',
+            size: '1024x1024',
+            appearances: [{ appearance: 'luminosity', value: 'tinted' }],
+          },
         ],
         info: { version: 1, author: 'expo' },
       };
@@ -75,14 +89,14 @@ function withAllAppIconSizes(config) {
 
 module.exports = {
   expo: {
-    name: 'Fenix',
+    name: 'Zharqyn Life Company',
     slug: 'fenix-mobile',
     owner: 'detronix',
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
-    scheme: 'fenixapp',
-    userInterfaceStyle: 'dark',
+    scheme: 'zharqynlife',
+    userInterfaceStyle: 'light',
     newArchEnabled: true,
     splash: {
       image: './assets/splash-icon.png',
@@ -100,13 +114,13 @@ module.exports = {
     runtimeVersion: '1.0.1',
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.fenix.mobile',
+      bundleIdentifier: 'com.zharqyn.mobile',
       buildNumber: '7',
       minimumOsVersion: '16.0',
       infoPlist: {
         UIBackgroundModes: ['fetch', 'remote-notification'],
         NSFaceIDUsageDescription:
-          'Fenix использует Face ID для быстрого и безопасного входа в приложение.',
+          'Zharqyn Life использует Face ID для быстрого и безопасного входа в приложение.',
         ITSAppUsesNonExemptEncryption: false,
         CFBundleIconName: 'AppIcon',
       },
@@ -114,9 +128,9 @@ module.exports = {
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
-        backgroundColor: '#0A0A0A',
+        backgroundColor: '#FFFFFF',
       },
-      package: 'com.fenix.mobile',
+      package: 'com.zharqyn.mobile',
       versionCode: 8,
       permissions: ['INTERNET', 'RECEIVE_BOOT_COMPLETED', 'VIBRATE'],
       ...(hasGoogleServices && { googleServicesFile }),
