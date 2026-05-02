@@ -65,4 +65,6 @@ android/app/debug.keystore
 *.png
 !assets/**/*.png
 !ios/Fenix/Images.xcassets/AppIcon.appiconset/*.png
+!ios/Fenix/Images.xcassets/**/*.png
+!android/app/src/main/res/**/*.png
 assets/icon_backup.png
