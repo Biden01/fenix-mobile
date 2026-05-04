@@ -75,7 +75,7 @@ function withAllAppIconSizes(config) {
 
 module.exports = {
   expo: {
-    name: 'Zharqyn Life Company',
+    name: 'Zharqyn Life',
     slug: 'fenix-mobile',
     owner: 'detronix',
     version: '1.0.3',
