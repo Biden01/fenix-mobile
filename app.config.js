@@ -78,7 +78,7 @@ module.exports = {
     name: 'Zharqyn Life Company',
     slug: 'fenix-mobile',
     owner: 'detronix',
-    version: '1.0.0',
+    version: '1.0.3',
     orientation: 'portrait',
     icon: './assets/icon.png',
     scheme: 'zharqynlife',
@@ -101,7 +101,7 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.zharqyn.mobile',
-      buildNumber: '7',
+      buildNumber: '8',
       minimumOsVersion: '16.0',
       infoPlist: {
         UIBackgroundModes: ['fetch', 'remote-notification'],
@@ -117,7 +117,7 @@ module.exports = {
         backgroundColor: '#FFFFFF',
       },
       package: 'com.zharqyn.mobile',
-      versionCode: 8,
+      versionCode: 9,
       permissions: ['INTERNET', 'RECEIVE_BOOT_COMPLETED', 'VIBRATE'],
       ...(hasGoogleServices && { googleServicesFile }),
     },
