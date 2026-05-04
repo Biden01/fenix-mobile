@@ -59,20 +59,6 @@ function withAllAppIconSizes(config) {
             scale: '1x',
             size: '1024x1024',
           },
-          {
-            filename: 'App-Icon-1024x1024@1x.png',
-            idiom: 'ios-marketing',
-            scale: '1x',
-            size: '1024x1024',
-            appearances: [{ appearance: 'luminosity', value: 'dark' }],
-          },
-          {
-            filename: 'App-Icon-1024x1024@1x.png',
-            idiom: 'ios-marketing',
-            scale: '1x',
-            size: '1024x1024',
-            appearances: [{ appearance: 'luminosity', value: 'tinted' }],
-          },
         ],
         info: { version: 1, author: 'expo' },
       };
