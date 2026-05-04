@@ -100,7 +100,7 @@ module.exports = {
     runtimeVersion: '1.0.1',
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.zharqyn.mobile',
+      bundleIdentifier: 'com.fenix.mobile',
       buildNumber: '8',
       minimumOsVersion: '16.0',
       infoPlist: {
@@ -116,7 +116,7 @@ module.exports = {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#FFFFFF',
       },
-      package: 'com.zharqyn.mobile',
+      package: 'com.fenix.mobile',
       versionCode: 9,
       permissions: ['INTERNET', 'RECEIVE_BOOT_COMPLETED', 'VIBRATE'],
       ...(hasGoogleServices && { googleServicesFile }),
