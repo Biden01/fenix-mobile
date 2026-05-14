@@ -1,5 +1,5 @@
 /**
- * FenixApp Design System - Typography
+ * ZharqynApp Design System - Typography
  * Montserrat for body, Playfair Display for headings
  */
 

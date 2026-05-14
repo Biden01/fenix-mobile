@@ -400,14 +400,14 @@ export function RegisterScreen({
                 {t.auth.ageConfirm}
                 <Text
                   style={{ color: theme.colors.goldForeground, textDecorationLine: 'underline' }}
-                  onPress={() => Linking.openURL('https://fenixinternationalcompany.kz/terms')}
+                  onPress={() => Linking.openURL('https://zharqyn.life/terms')}
                 >
                   {t.auth.termsOfUse}
                 </Text>
                 {' и '}
                 <Text
                   style={{ color: theme.colors.goldForeground, textDecorationLine: 'underline' }}
-                  onPress={() => Linking.openURL('https://fenixinternationalcompany.kz/privacy')}
+                  onPress={() => Linking.openURL('https://zharqyn.life/privacy')}
                 >
                   {t.auth.privacyPolicy}
                 </Text>

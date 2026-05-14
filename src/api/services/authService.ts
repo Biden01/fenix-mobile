@@ -98,7 +98,11 @@ class AuthService {
       return { error: response.error };
     }
 
-    return { token: response.data!.access_token };
+    if (!response.data?.access_token) {
+      return { error: 'Неверный ответ сервера' };
+    }
+
+    return { token: response.data.access_token };
   }
 
   /**
@@ -184,7 +188,11 @@ class AuthService {
       return { error: response.error };
     }
 
-    return { token: response.data!.access_token };
+    if (!response.data?.access_token) {
+      return { error: 'Неверный ответ сервера' };
+    }
+
+    return { token: response.data.access_token };
   }
 
   /**

@@ -10,8 +10,8 @@ import { Platform } from 'react-native';
 import { apiClient } from '@/api/client';
 import { ENDPOINTS } from '@/api/config';
 
-const STORED_PUSH_TOKEN_KEY = 'fenix_expo_push_token';
-const PENDING_PUSH_TOKEN_KEY = 'fenix_expo_push_token_pending';
+const STORED_PUSH_TOKEN_KEY = 'zharqyn_expo_push_token';
+const PENDING_PUSH_TOKEN_KEY = 'zharqyn_expo_push_token_pending';
 const DEFAULT_NOTIFICATION_ROUTE = '/(tabs)/(home)/notifications';
 
 const NOTIFICATION_ROUTE_MAP: Record<string, string> = {

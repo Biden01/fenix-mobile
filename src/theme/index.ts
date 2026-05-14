@@ -1,5 +1,5 @@
 /**
- * FenixApp Design System - Theme Export
+ * ZharqynApp Design System - Theme Export
  */
 
 import { createContext, useContext } from 'react';

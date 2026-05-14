@@ -45,7 +45,7 @@ class ApiClient {
     }
 
     try {
-      const authData = await SecureStore.getItemAsync('fenix-auth-storage');
+      const authData = await SecureStore.getItemAsync('zharqyn-auth-storage');
       if (authData) {
         const parsed = JSON.parse(authData);
         const token = parsed.state?.token || null;

@@ -8,7 +8,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { NotificationPoller } from '@/components/NotificationPoller';
 import { useAuthStore } from '@/store';
 
-const WEB_CABINET_URL = 'https://fenixinternationalcompany.kz/cabinet/verification';
+const WEB_CABINET_URL = 'https://zharqyn.life/cabinet/verification';
 
 function VerificationGate() {
   const theme = useTheme();

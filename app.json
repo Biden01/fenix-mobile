@@ -1,22 +1,22 @@
 {
   "expo": {
-    "name": "Fenix",
+    "name": "Zharqyn Life Company",
     "slug": "fenix-mobile",
     "owner": "detronix",
     "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "fenixapp",
-    "userInterfaceStyle": "dark",
+    "scheme": "zharqynlife",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0A0A0A"
+      "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fenix.mobile",
+      "bundleIdentifier": "com.zharqyn.mobile",
       "infoPlist": {
         "UIBackgroundModes": [
           "fetch",
@@ -28,9 +28,9 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0A0A0A"
+        "backgroundColor": "#FFFFFF"
       },
-      "package": "com.fenix.mobile",
+      "package": "com.zharqyn.mobile",
       "versionCode": 8,
       "permissions": [
         "INTERNET",

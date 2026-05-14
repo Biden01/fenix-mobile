@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Platform, Alert } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Bell,
@@ -18,6 +19,12 @@ import {
   Banknote,
   Lock,
   Check,
+  X,
+  Copy,
+  CheckCircle,
+  Calendar,
+  AlertTriangle,
+  Clock,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import {
@@ -30,6 +37,7 @@ import {
   RANKS,
   MiniStatCard,
   SectionHeader,
+  StatusBadge,
 } from '@/components/ui';
 import { RankIconSvg } from '@/components/ui/RankIconSvg';
 import { useAuthStore } from '@/store';
@@ -53,6 +61,8 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
   const [balance, setBalance] = useState<BalanceResponse | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [rankBannerDismissed, setRankBannerDismissed] = useState(false);
+  const [copiedLeg, setCopiedLeg] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -81,6 +91,31 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
   }, [refreshProfile, fetchData]);
 
   if (!user) return null;
+
+  const isToday = (dateStr?: string | null) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  };
+
+  const handleCopyLeg = async (link: string, leg: string) => {
+    await Clipboard.setStringAsync(link);
+    setCopiedLeg(leg);
+    setTimeout(() => setCopiedLeg(null), 2000);
+  };
+
+  const showRankBanner = !rankBannerDismissed && user.rank > 0 && isToday(user.rankTime) && user.type !== 0;
+
+  const getPlanDaysLeft = () => {
+    if (!user.planExpire) return null;
+    const exp = new Date(user.planExpire.includes('T') ? user.planExpire : user.planExpire + 'T00:00:00+05:00');
+    const now = Date.now();
+    const days = Math.ceil((exp.getTime() - now) / 86400000);
+    return days;
+  };
+
+  const planDaysLeft = getPlanDaysLeft();
 
   const leftLegQV = rankProgress ? parseFloat(rankProgress.left_total_qv) : user.leftSum;
   const rightLegQV = rankProgress ? parseFloat(rankProgress.right_total_qv) : user.rightSum;
@@ -153,15 +188,42 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
     >
       <View style={{ paddingHorizontal: theme.screenPadding.horizontal }}>
 
+        {/* ── Rank Achievement Banner ── */}
+        {showRankBanner && (
+          <View style={[styles.rankBanner, { borderColor: `${theme.gold.primary}50`, backgroundColor: `${theme.gold.primary}10` }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: `${theme.gold.primary}20`, alignItems: 'center', justifyContent: 'center' }}>
+                <Award size={22} color={theme.colors.goldForeground} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.sm, color: theme.colors.goldForeground }}>
+                  {t.dashboard.rankAchievedTitle}
+                </Text>
+                <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, marginTop: 2 }}>
+                  {t.dashboard.rankAchievedMsg} <Text style={{ color: theme.colors.goldForeground, fontFamily: theme.fonts.semibold }}>{(t.team.rankNames as Record<number, string>)[user.rank] || ''}</Text>
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setRankBannerDismissed(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <X size={16} color={theme.colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* ── Header ── */}
         <View style={styles.header}>
           <View>
             <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground }}>
-              {t.auth.sponsor}: {user.sponsorId}
+              {t.auth.sponsor}: <Text style={{ color: theme.colors.foreground }}>{user.sponsorLogin || String(user.sponsorId)}</Text>
             </Text>
-            <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes['2xl'], color: theme.colors.foreground, marginTop: 2 }}>
-              Fenix
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+              <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes['2xl'], color: theme.colors.foreground }}>
+                Zharqyn Life
+              </Text>
+              <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground }}>
+                {t.dashboard.qvRate}
+              </Text>
+            </View>
           </View>
           <TouchableOpacity onPress={onNotificationsPress} activeOpacity={0.8} style={{ position: 'relative' }}>
             <GlassCard
@@ -218,6 +280,34 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* ── Referral Links (leaders only) ── */}
+        {user.type !== 0 && (
+          <View style={{ marginTop: theme.spacing[4] }}>
+            <SectionHeader title={t.dashboard.refLinksQuick} />
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              {[
+                { leg: 'left', label: t.profile.leftLeg, link: user.leftLegLink },
+                { leg: 'right', label: t.profile.rightLeg, link: user.rightLegLink },
+              ].map(({ leg, label, link }) => (
+                <TouchableOpacity
+                  key={leg}
+                  onPress={() => handleCopyLeg(link, leg)}
+                  activeOpacity={0.75}
+                  style={{ flex: 1 }}
+                >
+                  <GlassCard style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: theme.spacing[3], borderWidth: StyleSheet.hairlineWidth, borderColor: copiedLeg === leg ? `${theme.semantic.success}60` : theme.colors.border }}>
+                    <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.xs, color: theme.colors.foreground }}>{label}</Text>
+                    {copiedLeg === leg
+                      ? <CheckCircle size={15} color={theme.semantic.success} />
+                      : <Copy size={15} color={theme.colors.mutedForeground} />
+                    }
+                  </GlassCard>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* ── Wallet Stats ── */}
         <View style={{ marginTop: theme.spacing[6] }}>
@@ -442,18 +532,66 @@ export function DashboardScreen({ onNotificationsPress, onTeamPress, onRankPress
 function HeroContent({ user, balance, nextRank, achievements, overallProgress }: any) {
   const theme = useTheme();
   const t = useT();
+
+  const statusName = (t.dashboard.statusNames as Record<number, string>)[user.status ?? 0] ?? '';
+  const statusVariant = (() => {
+    if (!user.status) return 'muted';
+    if (user.status >= 5) return 'gold';
+    if (user.status >= 3) return 'success';
+    return 'info';
+  })();
+
+  const planExp = user.planExpire
+    ? new Date(user.planExpire.includes('T') ? user.planExpire : user.planExpire + 'T00:00:00+05:00')
+    : null;
+  const planDays = planExp ? Math.ceil((planExp.getTime() - Date.now()) / 86400000) : null;
+  const planExpired = planDays !== null && planDays <= 0;
+  const planUrgent = !planExpired && planDays !== null && planDays <= 14;
+  const planWarning = !planExpired && !planUrgent && planDays !== null && planDays <= 30;
+  const planColor = planExpired ? theme.semantic.error : planUrgent ? theme.semantic.error : planWarning ? theme.semantic.warning : theme.semantic.success;
+
   return (
     <View>
       {/* Top row: avatar + info + balance */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: theme.spacing[4] }}>
         <Avatar name={user.name} source={user.avatar ? `${MEDIA_BASE_URL}${user.avatar}` : undefined} size="lg" />
         <View style={{ flex: 1, marginLeft: 14 }}>
-          <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.lg, color: theme.colors.foreground, marginBottom: 3 }}>
+          <Text style={{ fontFamily: theme.fonts.bold, fontSize: theme.fontSizes.lg, color: theme.colors.foreground, marginBottom: 4 }}>
             {user.name}
           </Text>
-          <RankBadge rank={user.rank} size="sm" showName />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <RankBadge rank={user.rank} size="sm" showName />
+            {statusName ? <StatusBadge label={statusName} variant={statusVariant as any} size="sm" /> : null}
+          </View>
         </View>
       </View>
+
+      {/* Plan expiry widget */}
+      {user.status > 0 && planDays !== null && (
+        <View style={[styles.planExpiry, { borderColor: `${planColor}40`, backgroundColor: `${planColor}08` }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {planExpired || planUrgent
+              ? <AlertTriangle size={14} color={planColor} />
+              : <Clock size={14} color={planColor} />
+            }
+            <Text style={{ fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.xs, color: theme.colors.foreground }}>
+              {`${t.dashboard.statusNames[user.status] || ''} `}
+              <Text style={{ color: planColor, fontFamily: theme.fonts.bold }}>
+                {planExpired
+                  ? t.dashboard.planExpired
+                  : `${planDays} ${t.dashboard.planDaysLeft}`
+                }
+              </Text>
+            </Text>
+            {(planExpired || planUrgent) && (
+              <Text style={{ marginLeft: 'auto', fontFamily: theme.fonts.medium, fontSize: theme.fontSizes.xs, color: planColor }}>
+                {t.dashboard.planRenew}
+              </Text>
+            )}
+          </View>
+        </View>
+      )}
+
 
       {/* Balance row */}
       <View style={{ flexDirection: 'row', gap: theme.spacing[3], marginBottom: theme.spacing[4] }}>
@@ -605,5 +743,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  rankBanner: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 16,
+  },
+  planExpiry: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 12,
   },
 });

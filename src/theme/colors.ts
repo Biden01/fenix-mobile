@@ -1,5 +1,5 @@
 /**
- * FenixApp Design System - Colors
+ * ZharqynApp Design System - Colors
  * Premium Gold Theme with Dark/Light mode support
  */
 

@@ -112,12 +112,7 @@ export function SplashScreen({ onAnimationComplete }: SplashScreenProps) {
 
       <Animated.View style={{ opacity: opacityAnim, alignItems: 'center' }}>
         <Text style={[styles.title, { fontFamily: theme.fonts.displayBold, fontSize: theme.fontSizes['4xl'], color: SPLASH_FG }]}>
-          Fenix
-        </Text>
-      </Animated.View>
-      <Animated.View style={{ opacity: taglineOpacity }}>
-        <Text style={[styles.subtitle, { fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: SPLASH_MUTED }]}>
-          International Company
+          Zharqyn Life Company
         </Text>
       </Animated.View>
 

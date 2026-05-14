@@ -123,7 +123,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
       {/* Logo / title */}
       <View style={styles.top}>
         <Text style={{ fontFamily: theme.fonts.displayBold, fontSize: 36, color: theme.colors.goldForeground }}>
-          Fenix
+          Zharqyn Life
         </Text>
         <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.sm, color: theme.colors.mutedForeground, marginTop: 8 }}>
           {t.lock.enterPin}

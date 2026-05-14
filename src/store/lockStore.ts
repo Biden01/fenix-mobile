@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 
-const PIN_KEY = 'fenix_pin_hash';
-const BIOMETRIC_KEY = 'fenix_biometric_enabled';
+const PIN_KEY = 'zharqyn_pin_hash';
+const BIOMETRIC_KEY = 'zharqyn_biometric_enabled';
 
 // Simple hash — XOR-fold SHA-like for PIN (4 digits, stored as hex string)
 function hashPin(pin: string): string {

@@ -7,7 +7,7 @@ import { GoldButton, GlassInput, GlassCard } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { useT } from '@/i18n';
 
-const REGISTER_URL = 'https://fenixinternationalcompany.kz/register';
+const REGISTER_URL = 'https://zharqyn.life/register';
 
 interface LoginScreenProps {
   onForgotPassword: () => void;
@@ -73,7 +73,7 @@ export function LoginScreen({ onForgotPassword }: LoginScreenProps) {
               },
             ]}
           >
-            Fenix
+            Zharqyn
           </Text>
           <Text
             style={[
@@ -85,7 +85,7 @@ export function LoginScreen({ onForgotPassword }: LoginScreenProps) {
               },
             ]}
           >
-            International Company
+            Life Company
           </Text>
         </View>
 

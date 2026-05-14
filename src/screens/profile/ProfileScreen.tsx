@@ -26,6 +26,7 @@ import {
   X,
   Share2,
   AlertTriangle,
+  Calendar,
 } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useTheme } from '@/theme';
@@ -236,6 +237,49 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
             </TouchableOpacity>
           )}
 
+          {/* ── Important Dates ── */}
+          {(() => {
+            const fmtDate = (v?: string | null) => {
+              if (!v) return '—';
+              const d = new Date(v.includes('T') ? v : v + 'T00:00:00+05:00');
+              return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            };
+            const planExp = user.planExpire
+              ? new Date(user.planExpire.includes('T') ? user.planExpire : user.planExpire + 'T00:00:00+05:00')
+              : null;
+            const planExpired = planExp ? planExp < new Date() : false;
+            const dateRows = [
+              { label: t.profile.regDate, value: fmtDate(user.registeredAt), color: '#60A5FA', bg: 'rgba(96,165,250,0.1)' },
+              { label: t.profile.purchaseDate, value: fmtDate(user.paidTime), color: theme.colors.goldForeground, bg: `${theme.gold.primary}12` },
+              ...(user.rankTime ? [{ label: t.profile.rankDate, value: fmtDate(user.rankTime), color: '#A78BFA', bg: 'rgba(167,139,250,0.1)' }] : []),
+              ...(user.planExpire ? [{
+                label: t.profile.planExpireDate,
+                value: planExpired ? t.profile.expired : fmtDate(user.planExpire),
+                color: planExpired ? theme.semantic.error : theme.semantic.success,
+                bg: planExpired ? `${theme.semantic.error}10` : `${theme.semantic.success}10`,
+              }] : []),
+            ];
+            return (
+              <View style={{ marginBottom: theme.spacing[4] }}>
+                <SectionHeader title={t.profile.importantDates} />
+                <GradientCard padding={0}>
+                  {dateRows.map(({ label, value, color, bg }, i) => (
+                    <View key={label}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 }}>
+                        <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
+                          <Calendar size={14} color={color} />
+                        </View>
+                        <Text style={{ flex: 1, fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground }}>{label}</Text>
+                        <Text style={{ fontFamily: theme.fonts.semibold, fontSize: theme.fontSizes.xs, color }}>{value}</Text>
+                      </View>
+                      {i < dateRows.length - 1 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 54 }} />}
+                    </View>
+                  ))}
+                </GradientCard>
+              </View>
+            );
+          })()}
+
           {/* ── Referral Links ── */}
           <View style={{ marginBottom: theme.spacing[4] }}>
             <SectionHeader title={t.profile.referralLinks} />
@@ -318,13 +362,13 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
           {/* ── Info ── */}
           <View style={{ marginBottom: theme.spacing[4] }}>
-            <SectionHeader title={t.profile.information ?? 'Информация'} />
+            <SectionHeader title={t.profile.help} />
             <GradientCard padding={0}>
               <MenuItem icon={HelpCircle} label={t.profile.help} onPress={() => Alert.alert(t.profile.help, t.profile.helpMsg, [{ text: t.common.ok }])} theme={theme} />
               <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 58 }} />
-              <MenuItem icon={FileText} label={t.profile.privacy} onPress={() => Linking.openURL('https://fenixinternationalcompany.kz/privacy')} theme={theme} />
+              <MenuItem icon={FileText} label={t.profile.privacy} onPress={() => Linking.openURL('https://zharqyn.life/privacy')} theme={theme} />
               <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.border, marginLeft: 58 }} />
-              <MenuItem icon={ScrollText} label={t.profile.terms} onPress={() => Linking.openURL('https://fenixinternationalcompany.kz/terms')} theme={theme} />
+              <MenuItem icon={ScrollText} label={t.profile.terms} onPress={() => Linking.openURL('https://zharqyn.life/terms')} theme={theme} />
             </GradientCard>
           </View>
 
@@ -374,7 +418,7 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
           {/* Version */}
           <Text style={{ fontFamily: theme.fonts.regular, fontSize: theme.fontSizes.xs, color: theme.colors.mutedForeground, textAlign: 'center', marginBottom: theme.spacing[8] }}>
-            Fenix International Company v{Constants.expoConfig?.version ?? '1.0.0'}
+            Zharqyn life Company v{Constants.expoConfig?.version ?? '1.0.0'}
           </Text>
 
         </View>

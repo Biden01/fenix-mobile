@@ -128,8 +128,8 @@ const mapProfileToUser = (profile: UserProfile): User => ({
   leftSum: parseFloat(profile.leftsum) || 0,
   rightSum: parseFloat(profile.rightsum) || 0,
   totalSum: parseFloat(profile.totalsum) || 0,
-  leftLegLink: `https://fenixinternationalcompany.kz/register?sponsor=${profile.user_id}&leg=1`,
-  rightLegLink: `https://fenixinternationalcompany.kz/register?sponsor=${profile.user_id}&leg=2`,
+  leftLegLink: `https://zharqyn.life/register?sponsor=${profile.user_id}&leg=1`,
+  rightLegLink: `https://zharqyn.life/register?sponsor=${profile.user_id}&leg=2`,
   registeredAt: profile.reg_time,
   paidTime: profile.paid_time,
   planExpire: profile.plan_expire,
@@ -289,7 +289,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'fenix-auth-storage',
+      name: 'zharqyn-auth-storage',
       storage: createJSONStorage(() => secureStorage),
       partialize: (state) => ({
         user: state.user,

@@ -1,5 +1,5 @@
 /**
- * FenixApp State Management
+ * ZharqynApp State Management
  * Zustand stores for global state
  */
 

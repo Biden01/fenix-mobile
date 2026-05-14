@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.summary        = package['description']
   s.description    = package['description']
   s.license        = 'MIT'
-  s.author         = 'FenixApp'
+  s.author         = 'ZharqynApp'
   s.homepage       = 'https://expo.dev'
   s.platforms      = { :ios => '15.1' }
   s.source         = { :path => '.' }

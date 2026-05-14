@@ -24,7 +24,7 @@ export const useThemeStore = create<ThemeState>()(
       },
     }),
     {
-      name: 'fenix-theme-storage-v2',
+      name: 'zharqyn-theme-storage-v1',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

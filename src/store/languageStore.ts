@@ -15,7 +15,7 @@ export const useLanguageStore = create<LanguageState>()(
       setLanguage: (language: Language) => set({ language }),
     }),
     {
-      name: 'fenix-language-storage',
+      name: 'zharqyn-language-storage',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

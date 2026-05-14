@@ -1,5 +1,5 @@
 /**
- * FenixApp Design System - Layout Constants
+ * ZharqynApp Design System - Layout Constants
  * Spacing, border radius, shadows, and common dimensions
  */
 import { Platform } from 'react-native';

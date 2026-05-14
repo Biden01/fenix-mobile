@@ -171,7 +171,7 @@ export function FinanceScreen({ onViewReports, onTransfer }: FinanceScreenProps)
           {([
             { icon: ArrowUpRight, label: t.finance.transfer,  onPress: onTransfer,                                           color: theme.colors.goldForeground, bg: `${theme.gold.primary}18` },
             { icon: FileText,     label: t.finance.reports,   onPress: onViewReports,                                        color: '#60A5FA',                    bg: 'rgba(96,165,250,0.15)' },
-            { icon: ExternalLink, label: t.finance.website,   onPress: () => Linking.openURL('https://fenixinternationalcompany.kz'), color: '#A78BFA', bg: 'rgba(167,139,250,0.15)' },
+            { icon: ExternalLink, label: t.finance.website,   onPress: () => Linking.openURL('https://zharqyn.life'), color: '#A78BFA', bg: 'rgba(167,139,250,0.15)' },
           ] as const).map(({ icon: Icon, label, onPress, color, bg }) => (
             <TouchableOpacity key={label} onPress={onPress} activeOpacity={0.75} style={styles.actionBtn}>
               <GlassCard cornerRadius={16} style={{ padding: 14, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border }}>

@@ -88,7 +88,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: 'fenix-cart-storage',
+      name: 'zharqyn-cart-storage',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

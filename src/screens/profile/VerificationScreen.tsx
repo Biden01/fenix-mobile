@@ -21,7 +21,7 @@ import { financeService, VerificationStatus } from '@/api';
 import { useAuthStore } from '@/store';
 import { useT } from '@/i18n';
 
-const WEB_CABINET_URL = 'https://fenixinternationalcompany.kz/cabinet/verification';
+const WEB_CABINET_URL = 'https://zharqyn.life/cabinet/verification';
 
 interface VerificationScreenProps {
   onBack: () => void;

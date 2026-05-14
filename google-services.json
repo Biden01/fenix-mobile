@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "825032831370",
+    "project_id": "zharqyn-life",
+    "storage_bucket": "zharqyn-life.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:825032831370:android:dd53ea8b233da0f498d873",
+        "android_client_info": {
+          "package_name": "com.zharqyn.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkeaC4sC-QiMK8Xq0kv6tmoh1DsMu2qSs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

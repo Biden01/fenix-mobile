@@ -17,7 +17,7 @@ export const API_CONFIG = {
   // BASE_URL: 'http://185.129.48.44/api/v1',
 
   // Production with domain + SSL
-  BASE_URL: 'https://fenixinternationalcompany.kz/api/v1',
+  BASE_URL: 'https://zharqyn.life/api/v1',
 
   TIMEOUT: 30000, // 30 seconds
 };

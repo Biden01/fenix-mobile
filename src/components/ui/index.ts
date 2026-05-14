@@ -1,5 +1,5 @@
 /**
- * FenixApp UI Components
+ * ZharqynApp UI Components
  * Export all reusable UI primitives
  */
 
