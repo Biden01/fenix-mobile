@@ -354,7 +354,7 @@
 				CODE_SIGN_ENTITLEMENTS = Fenix/Fenix.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_TEAM = 6TFJX2Z5HZ;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -396,7 +396,7 @@
 				CODE_SIGN_ENTITLEMENTS = Fenix/Fenix.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_TEAM = 6TFJX2Z5HZ;
 				INFOPLIST_FILE = Fenix/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
